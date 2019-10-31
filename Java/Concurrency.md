@@ -41,7 +41,28 @@
 * Changes made by one task, even if they’re atomic in the sense of not being interruptible, might not be visible to other tasks (the changes might be temporarily stored in a local processor cache, for example).
 *  The `synchronization` mechanism forces changes by one task on a multiprocessor system to be visible across the application.
 
-### The volatile keyword:
+### synchronized
+* We should minimize the scope of synchronization for performance reason but also keep the correctness of the code at the same time.
+* e.g. We could synchronized on the canonical representation for the string object:
+```
+public class Component{
+    Map<Sting, Obejct> dataMap = new HasMap<>();
+    
+    public Object getData(String key){
+        Object result = dataMap.get(key);
+        if(result == null){
+            synchronized(key.intern()){
+                if(result == null){
+                    //initial data...
+                }
+            }
+        }
+        return result;
+    }
+}
+```   
+
+### volatile:
 * The volatile keyword also ensures visibility across the application. If you declare a field to be volatile, this means that as soon as a write occurs for that field, all reads will see the change.(even if local caches are involved)
 * This is true even if local caches are involved—volatile fields are immediately written through to main memory, and reads occur from main memory.(and are not cached).
 * Volatile also restricts compiler reordering of accesses during optimization.
