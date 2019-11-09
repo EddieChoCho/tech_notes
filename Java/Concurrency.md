@@ -44,7 +44,7 @@
 ### synchronized
 * We should minimize the scope of synchronization for performance reason but also keep the correctness of the code at the same time.
 * e.g. We could synchronized on the canonical representation for the string object:
-```
+```java
 public class Component{
     Map<Sting, Obejct> dataMap = new HasMap<>();
     
