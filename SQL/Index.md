@@ -83,7 +83,21 @@
     * This means you have to know the column combinations that appear in the where clause.      
  
 ### Slow Indexes, Part II
-* TBD...
+*  This section explains the way databases pick an index and demonstrates the possible side effects when changing existing indexes.
+
+#### The Query Optimizer
+* The query optimizer, or query planner, is the database component that transforms an SQL statement into an execution plan. 
+* This process is also called compiling or parsing. There are two distinct optimizer types.
+
+* Cost-based optimizers (CBO)
+    * Generate many execution plan variations and calculate a cost value for each plan. 
+    * The cost calculation is based on the operations in use and the estimated row numbers. 
+    * In the end the cost value serves as the benchmark for picking the “best” execution plan.
+
+* Rule-based optimizers (RBO)
+    * Generate the execution plan using a hard-coded rule set. 
+    * Rule based optimizers are less flexible and are seldom used today.
+    
 ## Execution Plans
 * https://use-the-index-luke.com/sql/explain-plan
 
