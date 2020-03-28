@@ -9,6 +9,7 @@
 
 #### Safety Hazards
 #### Liveness Hazards
+* A liveness failure occurs when an activity gets into a state such that it is permanently unable to make forward progress. (e.g. inadvertent infinite loop)
 * Chapter 10 describes various forms of liveness failures and how to avoid them, 
 	* deadlock (Section 10.1), 
 	* starvation (Section 10.3.1), 
@@ -75,8 +76,67 @@
 * For every invariant that involves more than one variable, all the variables involved in that invariant must be guarded by the same lock.
 * While synchronized methods can make individual operations atomic, additional locking is required - when multiple operations are combined into a compound action.
 
-### Chapter 3. (Sharing Objects)
-* TBD...
+#### 2.5 Liveness and Performance
+* There is frequently a tension between simplicity and performance. When implementing a synchronization policy, resist the temptation to prematurely sacrifice simplicity (potentially compromising safety) for the sake of performance.
+* Holding a lock for a long time, either because you are doing something compute-intensive or because you execute a potentially blocking operation, introduces the risk of liveness or performance problems.
+* Avoid holding locks during lengthy computations or operations at risk of not completing quickly such as network or console I/O.
+
+### Chapter 3. Sharing Objects
+* Synchronization also has another significant, and subtle, aspect: memory visibility. 
+* We want not only to prevent one thread from modifying the state of an object when another is using it, but also to ensure that when a thread modifies the state of an object, other threads can actually see the changes that were made.
+#### Visibility
+    * There is no guarantee that the reading thread will see a value written by another thread on a timely basis, or even at all. 
+    * In order to ensure visibility of memory writes across threads, you must use synchronization.
+    * There is no guarantee that operations in one thread will be performed in the order given by the program, as long as the reordering is not detectable from within that thread - even if the reordering is apparent to other threads.
+    * In the absence of synchronization, the Java Memory Model permits the compiler to reorder operations and cache values in registers, and permits CPUs to reorder operations and cache values in processor-specific caches. (see Chapter 16)
+    * Always use the proper synchronization whenever data is shared across threads.
+* Stale Data
+    * A thread may see an out-of-date value. Unless synchronization is used every time a variable is accessed, it is possible to see a stale value for that variable.
+    * Worse, staleness is not all-or-nothing: a thread can see an up-to-date value of one variable but a stale value of another variable that was written first.
+    * Reading data without synchronization is analogous to using the READ_UNCOMMITTED isolation level in a database, where you are willing to trade accuracy for performance. 
+        * However, in the case of unsynchronized reads, you are trading away a greater degree of accuracy, since the visible value for a shared variable can be arbitrarily stale.    
+    * Synchronizing only the setter would not be sufficient: threads calling get would still be able to see stale values.
+        
+* Non-atomic 64-bit Operations
+    * Out-of-thin-air safety
+        * When a thread reads a variable without synchronization, it may see a stale value, but at least it sees a value that was actually placed there by some thread rather than some random value.
+    * Out-of-thin-air safety applies to all variables, with one exception: 64Ͳbit numeric variables (double and long) that are not declared volatile (see Section 3.1.4)
+    * The Java Memory Model requires fetch and store operations to be atomic.
+    * But for nonvolatile long and double variables, the JVM is permitted to treat a 64-bit read or write as two separate 32-bit operations. 
+    * It is not safe to use shared mutable long and double variables in multithreaded programs unless they are declared `volatile` or guarded by a `lock`.
+    
+* Locking and Visibility
+    * Intrinsic locking can be used to guarantee that one thread sees the effects of another in a predictable manner.
+    * Locking is not just about mutual exclusion; it is also about memory visibility. To ensure that all threads see the most up-to-date values of shared mutable variables, the reading and writing threads must synchronize on a common lock.
+    * Notes from Thinking in Java:
+            * Brian’s Rule of Synchronization:
+                * If you are writing a variable that might next be read by another thread, or reading a variable that might have last been written by another thread, you must use synchronization, and further, both the reader and the writer must synchronize using the same monitor lock.
+            * This is an important point: Every method that accesses a critical shared resource must be synchronized or it won’t work right.
+            
+* Volatile Variables
+    * When a field is declared volatile, the compiler and runtime are put on notice that this variable is shared and that operations on it should not be reordered with other memory operations. 
+    * Volatile variables are not cached in registers or in caches where they are hidden from other processors.
+    * From a memory visibility perspective, writing a volatile variable is like exiting a synchronized block and reading a volatile variable is like entering a synchronized block.
+    
+    * Practices 
+        * However, code that relies on volatile variables for visibility of arbitrary state is more fragile and harder to understand than code that uses locking.
+        * Use volatile variables only when they simplify implementing and verifying your synchronization policy; avoid using volatile variables when verifying correctness would require subtle reasoning about visibility. 
+        * Good uses of volatile variables include ensuring the visibility of their own state, that of the object they refer to, or indicating that an important lifecycle event (such as initialization or shutdown) has occurred.
+        
+    * Debugging tip
+        * For server applications, be sure to always specify the -server JVM command line switch when invoking the JVM, even for development and testing. The server JVM performs more optimization than the client JVM, such as hoisting variables out of a loop that are not modified in the loop.
+        * Code that might appear to work in the development environment (client JVM) can break in the deployment environment (server JVM).
+    
+    * Limitations of Volatile Variables
+        * The semantics of volatile are not strong enough to make the increment operation (count++) atomic.
+        * Locking can guarantee both visibility and atomicity; volatile variables can only guarantee visibility.
+        
+    * Use volatile variables only when all the following criteria are met:
+        * Writes to the variable do not depend on its current value, or you can ensure that only a single thread ever updates the value.
+        * The variable does not participate in invariants with other state variables; and
+        * Locking is not required for any other reason while the variable is being accessed.      
+        
+    
 ### Chapter 4. (Composing Objects)
 * TBD...
 ### Chapter 5 (Building Blocks)
