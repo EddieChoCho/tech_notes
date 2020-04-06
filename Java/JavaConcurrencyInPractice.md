@@ -36,7 +36,7 @@
 
 * Compound Actions
     * We refer collectively to check-then-act and read-modify-write sequences as compound actions: sequences of operations that must be executed atomically in order to remain thread-safe.
-    * Use existing threadͲsafe objects, like AtomicLong, to manage your class's state.        
+    * Use existing thread-safe objects, like AtomicLong, to manage your class's state.        
         
 #### 2.3 Locking
 * Intrinsic Locks(Monitor Locks)
@@ -100,7 +100,7 @@
 * Non-atomic 64-bit Operations
     * Out-of-thin-air safety
         * When a thread reads a variable without synchronization, it may see a stale value, but at least it sees a value that was actually placed there by some thread rather than some random value.
-    * Out-of-thin-air safety applies to all variables, with one exception: 64Ͳbit numeric variables (double and long) that are not declared volatile (see Section 3.1.4)
+    * Out-of-thin-air safety applies to all variables, with one exception: 64-bit numeric variables (double and long) that are not declared volatile (see Section 3.1.4)
     * The Java Memory Model requires fetch and store operations to be atomic.
     * But for nonvolatile long and double variables, the JVM is permitted to treat a 64-bit read or write as two separate 32-bit operations. 
     * It is not safe to use shared mutable long and double variables in multithreaded programs unless they are declared `volatile` or guarded by a `lock`.
@@ -135,7 +135,22 @@
         * Writes to the variable do not depend on its current value, or you can ensure that only a single thread ever updates the value.
         * The variable does not participate in invariants with other state variables; and
         * Locking is not required for any other reason while the variable is being accessed.      
-        
+
+* Publication and Escape
+    * What is `publishing an object`
+        * Making it available to code outside of its current scope
+            * By storing a reference to it where other code can find it.
+            * Returning it from a non-private method. 
+            * Or passing it to a method in another class.
+    * Publishing internal state variables can compromise encapsulation and make it more difficult to preserve invariants; (?) 
+    * Publishing objects before they are fully constructed can compromise thread safety
+    * What is `escape`
+        * An object that is published when it should not have been is said to have escaped.
+    * Any object that is reachable from a published object by following some chain of non-private field references and method calls has also been published.
+    * Once an object escapes, you have to assume that another class or thread may, maliciously or carelessly, misuse it. 
+    * This is a compelling reason to use encapsulation: it makes it practical to analyze programs for correctness and harder to violate design constraints accidentally.
+    * Do not allow the this reference to escape during construction.
+    
     
 ### Chapter 4. (Composing Objects)
 * TBD...
