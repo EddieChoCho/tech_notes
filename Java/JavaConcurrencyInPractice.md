@@ -84,12 +84,14 @@
 ### Chapter 3. Sharing Objects
 * Synchronization also has another significant, and subtle, aspect: memory visibility. 
 * We want not only to prevent one thread from modifying the state of an object when another is using it, but also to ensure that when a thread modifies the state of an object, other threads can actually see the changes that were made.
-#### Visibility
-    * There is no guarantee that the reading thread will see a value written by another thread on a timely basis, or even at all. 
-    * In order to ensure visibility of memory writes across threads, you must use synchronization.
-    * There is no guarantee that operations in one thread will be performed in the order given by the program, as long as the reordering is not detectable from within that thread - even if the reordering is apparent to other threads.
-    * In the absence of synchronization, the Java Memory Model permits the compiler to reorder operations and cache values in registers, and permits CPUs to reorder operations and cache values in processor-specific caches. (see Chapter 16)
-    * Always use the proper synchronization whenever data is shared across threads.
+
+#### 3.1 Visibility
+* There is no guarantee that the reading thread will see a value written by another thread on a timely basis, or even at all. 
+* In order to ensure visibility of memory writes across threads, you must use synchronization.
+* There is no guarantee that operations in one thread will be performed in the order given by the program, as long as the reordering is not detectable from within that thread - even if the reordering is apparent to other threads.
+* In the absence of synchronization, the Java Memory Model permits the compiler to reorder operations and cache values in registers, and permits CPUs to reorder operations and cache values in processor-specific caches. (see Chapter 16)
+* Always use the proper synchronization whenever data is shared across threads.
+
 * Stale Data
     * A thread may see an out-of-date value. Unless synchronization is used every time a variable is accessed, it is possible to see a stale value for that variable.
     * Worse, staleness is not all-or-nothing: a thread can see an up-to-date value of one variable but a stale value of another variable that was written first.
@@ -136,21 +138,52 @@
         * The variable does not participate in invariants with other state variables; and
         * Locking is not required for any other reason while the variable is being accessed.      
 
-* Publication and Escape
-    * What is `publishing an object`
-        * Making it available to code outside of its current scope
-            * By storing a reference to it where other code can find it.
-            * Returning it from a non-private method. 
-            * Or passing it to a method in another class.
-    * Publishing internal state variables can compromise encapsulation and make it more difficult to preserve invariants; (?) 
-    * Publishing objects before they are fully constructed can compromise thread safety
-    * What is `escape`
-        * An object that is published when it should not have been is said to have escaped.
-    * Any object that is reachable from a published object by following some chain of non-private field references and method calls has also been published.
-    * Once an object escapes, you have to assume that another class or thread may, maliciously or carelessly, misuse it. 
-    * This is a compelling reason to use encapsulation: it makes it practical to analyze programs for correctness and harder to violate design constraints accidentally.
-    * Do not allow the this reference to escape during construction.
+#### 3.2 Publication and Escape
+* What is `publishing an object`
+    * Making it available to code outside of its current scope
+        * By storing a reference to it where other code can find it.
+        * Returning it from a non-private method. 
+        * Or passing it to a method in another class.
+* Publishing internal state variables can compromise encapsulation and make it more difficult to preserve invariants; (?) 
+* Publishing objects before they are fully constructed can compromise thread safety
+* What is `escape`
+    * An object that is published when it should not have been is said to have escaped.
+* Any object that is reachable from a published object by following some chain of non-private field references and method calls has also been published.
+* Once an object escapes, you have to assume that another class or thread may, maliciously or carelessly, misuse it. 
+* This is a compelling reason to use encapsulation: it makes it practical to analyze programs for correctness and harder to violate design constraints accidentally.
+* Do not allow the this reference to escape during construction.
     
+#### 3.3 Thread Confinement //TBD!
+* When an object is confined to a thread, such usage is automatically thread-safe even if the confined object itself is not.
+* The language and core libraries provide mechanisms that can help in maintaining thread confinement - local variables and the ThreadLocal class.
+* Comment application of thread confinement
+    * The use of pooled JDBC (Java Database Connectivity) Connection objects.
+    * Since most requests, such as servlet requests or EJB calls, are processed synchronously by a single thread, and the pool will not dispense the same connection to another thread until it has been returned, this pattern of connection management implicitly confines the Connection to that thread for the duration of the request.
+        
+* Ad-hoc Thread Confinement
+        
+* Stack Confinement(within-thread or thread-local usage)
+    * Stack confinement is a special case of thread confinement in which an object can only be reached through local variables.
+    * It is simpler to maintain and less fragile than ad-hoc thread confinement.
+    
+* ThreadLocal
+
+#### 3.4 Immutability 
+* Immutable objects are always thread-safe.
+* Immutable objects are safe to share and publish freely without the need to make defensive copies.
+* An object is immutable if:
+    * Its state cannot be modified after construction;
+    * All its fields are final; (It is technically possible to have an immutable object without all fields being final. String is such a classͲbut this relies on delicate reasoning about benign data races that requires a deep understanding of the Java Memory Model.)
+    * It is properly constructed (the this reference does not escape during construction).
+
+* Final Fields
+    * Final fields can't be modified (although the objects they refer to can be modified if they are mutable).
+    * Final fields also have special semantics under the Java Memory Model. It is the use of final fields that makes possible the guarantee of initialization safety (see Section 3.5.2) that lets immutable objects be freely accessed and shared without synchronization.
+    * Just as it is a good practice to make all fields private unless they need greater visibility, it is a good practice to make all fields final unless they need to be mutable.
+
+#### 3.5 Safe Publication 
+
+        
     
 ### Chapter 4. (Composing Objects)
 * TBD...
