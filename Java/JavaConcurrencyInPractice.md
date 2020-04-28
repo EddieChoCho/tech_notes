@@ -173,7 +173,7 @@
 * Immutable objects are safe to share and publish freely without the need to make defensive copies.
 * An object is immutable if:
     * Its state cannot be modified after construction;
-    * All its fields are final; (It is technically possible to have an immutable object without all fields being final. String is such a classͲbut this relies on delicate reasoning about benign data races that requires a deep understanding of the Java Memory Model.)
+    * All its fields are final; (It is technically possible to have an immutable object without all fields being final. String is such a class but this relies on delicate reasoning about benign data races that requires a deep understanding of the Java Memory Model.)
     * It is properly constructed (the this reference does not escape during construction).
 
 * Final Fields
@@ -181,8 +181,29 @@
     * Final fields also have special semantics under the Java Memory Model. It is the use of final fields that makes possible the guarantee of initialization safety (see Section 3.5.2) that lets immutable objects be freely accessed and shared without synchronization.
     * Just as it is a good practice to make all fields private unless they need greater visibility, it is a good practice to make all fields final unless they need to be mutable.
 
-#### 3.5 Safe Publication 
+#### 3.5 Safe Publication
+* Immutable Objects and Initialization Safety
+    * JavaMemory Model offers a special guarantee of initialization safety for sharing immutable objects. 
+    * An object reference becomes visible to another thread does not necessarily mean that the state of that object is visible to the consuming thread. In order to guarantee a consistent view of the object's state, synchronization is needed.
+    * Immutable objects(unmodifiable state, all fields are final, and proper construction) can be used safely by any thread without additional synchronization, even when synchronization is not used to publish them.
+     
+* Safe Publication Idioms
+    * To publish an object safely, both the reference to the object and the object's state must be made visible to other threads at the same time. A properly constructed object can be safely published by:
+        * Initializing an object reference from a static initializer;
+        * Storing a reference to it into a volatile field or AtomicReference;
+        * Storing a reference to it into a final field of a properly constructed object; or
+        * Storing a reference to it into a field that is properly guarded by a lock.
 
+* Effectively Immutable Objects
+    * Safely published effectively immutable objects can be used safely by any thread without additional synchronization.
+
+* Mutable Objects
+    * The publication requirements for an object depend on its mutability:
+        * Immutable objects can be published through any mechanism;
+        * Effectively immutable objects must be safely published;
+        * Mutable objects must be safely published, and must be either thread-safe or guarded by a lock
+
+* Sharing Objects Safely
         
     
 ### Chapter 4. (Composing Objects)
