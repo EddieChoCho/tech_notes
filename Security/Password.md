@@ -1,0 +1,117 @@
+# How to securely store the passwords
+
+## Basic tips
+* Should not be stored as plaintext.
+* Should not be encrypted(two way) but hashed(one way).
+* Should be hashed by a Cryptographic Hash function with salt.
+
+## Salted Password Hashing - Doing it Right[1]
+
+### What is password hashing?
+* Hash algorithms are one way functions. They turn any amount of data into a fixed-length "fingerprint" that cannot be reversed. 
+* They also have the property that if the input changes by even a tiny bit, the resulting hash is completely different. 
+* This is great for protecting passwords, because we want to store passwords in a form that protects them even if the password file itself is compromised, but at the same time, we need to be able to verify that a user's password is correct.
+* The hash functions used to implement data structures such as hash tables are designed to be fast, not secure. Only `cryptographic hash functions` may be used to implement password hashing. 
+	* Hash functions like SHA256, SHA512, RipeMD, and WHIRLPOOL are cryptographic hash functions.
+
+* Hashing the password does not meet our needs for security. There are many ways to recover passwords from plain hashes very quickly. 
+
+### How Hashes are Cracked
+* Dictionary and Brute Force Attacks
+
+    * Dictionary attack 
+        * A dictionary attack uses a file containing words, phrases, common passwords, and other strings that are likely to be used as a password. 
+        * Each word in the file is hashed, and its hash is compared to the password hash. If they match, that word is the password. 
+        * These dictionary files are constructed by extracting words from large bodies of text, and even from real databases of passwords. 
+
+    * Brute-force attacks
+        * A brute-force attack tries every possible combination of characters up to a given length. 
+        * These attacks are very computationally expensive, and are usually the least efficient in terms of hashes cracked per processor time, but they will always eventually find the password. 
+        * Passwords should be long enough that searching through all possible character strings to find it will take too long to be worthwhile.
+
+    * There is no way to prevent dictionary attacks or brute force attacks. They can be made less effective, but there isn't a way to prevent them altogether. 
+    * If your password hashing system is secure, the only way to crack the hashes will be to run a dictionary or brute-force attack on each hash.
+    
+* Lookup Tables
+	* These tables store a mapping between the hash of a password, and the correct password for that hash. 
+	* The hash values are indexed so that it is possible to quickly search the database for a given hash. If the hash is present in the database, the password can be recovered in a fraction of a second. 
+	* This only works for "unsalted" hashes.
+
+* Reverse Lookup Tables 
+	* This attack allows an attacker to apply a dictionary or brute-force attack to many hashes at the same time, without having to pre-compute a lookup table.
+	* The attacker creates a lookup table that maps each password hash from the compromised user account database to a list of users who had that hash. 
+	* The attacker then hashes each password guess and uses the lookup table to get a list of users whose password was the attacker's guess. 
+	* This attack is especially effective because it is common for many users to have the same password.
+
+* Rainbow Tables
+    * Rainbow tables are a time-memory trade-off technique. They are like lookup tables, except that they sacrifice hash cracking speed to make the lookup tables smaller. 
+    * Because they are smaller, the solutions to more hashes can be stored in the same amount of space, making them more effective. 
+    * Rainbow tables that can crack any md5 hash of a password up to 8 characters long exist.
+    
+### Adding Salt
+* By randomizing each hash, when the same password is hashed twice, the hashes are not the same. (prevent lookup tables and rainbow tables attacks)
+* We can randomize the hashes by appending or prepending a random string, called a salt, to the password before hashing.
+* The salt does not need to be secret. Just by randomizing the hashes, lookup tables, reverse lookup tables, and rainbow tables become ineffective. 
+* An attacker won't know in advance what the salt will be, so they can't pre-compute a lookup table or rainbow table. If each user's password is hashed with a different salt, the reverse lookup table attack won't work either.
+
+#### The WRONG Way: Short Salt & Salt Reuse
+
+* Salt Reuse
+	* A common mistake is to use the same salt in each hash. Either the salt is hard-coded into the program, or is generated randomly once. This is ineffective because if two users have the same password, they'll still have the same hash.
+	* If the salt is hard-coded into a popular product, lookup tables and rainbow tables can be built for that salt, to make it easier to crack hashes generated by the product.
+	* A new random salt must be generated each time a user creates an account or changes their password.
+	
+* Short Salt
+    * If the salt is too short, an attacker can build a lookup table for every possible salt.
+    * For the same reason, the username shouldn't be used as a salt. Usernames may be unique to a single service, but they are predictable and often reused for accounts on other services. An attacker can build lookup tables for common usernames and use them to crack username-salted hashes.
+    * To make it impossible for an attacker to create a lookup table for every possible salt, the salt must be long. 
+    * A good rule of thumb is to use a salt that is the same size as the output of the hash function.
+
+#### The WRONG Way: Double Hashing & Wacky Hash Functions
+* TBD...
+
+#### The RIGHT Way: How to Hash Properly
+* The Basics: Hashing with Salt
+    * TBD...
+
+* Making Password Cracking Harder: Slow Hash Functions
+    * TBD...
+
+* Impossible-to-crack Hashes: Keyed Hashes and Password Hashing Hardware
+    * TBD...
+
+#### Other Security Measures
+* TBD...
+
+## How Dropbox securely stores your passwords
+
+* Step1 - The plaintext password is transformed into a hash value using SHA512: 
+    * This addresses two particular issues with bcrypt. 
+        * Some implementations of bcrypt truncate the input to 72 bytes, which reduces the entropy of the passwords. 
+	    * Other implementations don’t truncate the input and are therefore vulnerable to DoS attacks because they allow the input of arbitrarily long passwords.
+	    
+    * By applying SHA, we can quickly convert really long passwords into a fixed length 512 bit value, solving both problems.
+	
+* Step2 - This SHA512 hash is hashed again using bcrypt with a cost of 10, and a unique, per-user salt. 
+    * Unlike cryptographic hash functions like SHA, bcrypt is designed to be slow and hard to speed up via custom hardware and GPUs. 
+    * A work factor of 10 translates into roughly 100ms for all these steps on our servers.
+
+* Step3 - The resulting bcrypt hash is encrypted with AES256 using a secret key (common to all hashes) that we refer to as a pepper.
+    * The pepper is a defense in depth measure. The pepper value is stored separately in a manner that makes it difficult to discover by an attacker (i.e. not in a database table). 
+    * As a result, if only the password storage is compromised, the password hashes are encrypted and of no use to an attacker.     
+
+#### Why is the global pepper used for encryption instead of hashing?
+
+* Storing global pepper separately also means that we have to include the possibility of the pepper (and not the password hashes) being compromised. 
+* If we use the global pepper for hashing, we can’t easily rotate it. Instead, using it for encryption gives us similar security but with the added ability to rotate. 
+* The input to this encryption function is randomized, but we also include a random initialization vector (IV).
+* Considering storing the global pepper in a hardware security module (HSM). This is an undertaking with considerable complexity, but would significantly reduce the chances of a pepper compromise.
+
+## References
+* [1][Salted Password Hashing - Doing it Right](https://crackstation.net/hashing-security.htm)
+* [2][How Dropbox securely stores your passwords](https://dropbox.tech/security/how-dropbox-securely-stores-your-passwords)
+      
+
+    
+
+ 
