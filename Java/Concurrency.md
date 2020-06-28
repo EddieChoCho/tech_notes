@@ -81,6 +81,23 @@ public class Component{
 ### Thread local storage
 * ThreadLocal guarantees that no race condition can occur. individual threads are each allocated their own storage.
 
+### Thread pool
+* ForkjoinPool
+
+* FixedThreadPool
+    * When all threads are busy, then the executor will queue new tasks.  This way, we have more control over our program's resource consumption.
+    * Fixed thread pools are better suited for tasks with unpredictable execution times.
+
+* CachedThreadPool
+    * Cached thread pools are using “synchronous handoff” to queue new tasks. 
+    * The basic idea of synchronous handoff is simple and yet counter-intuitive: One can queue an item if and only if another thread takes that item at the same time. In other words, the SynchronousQueue can not hold any tasks whatsoever.
+    * Suppose a new task comes in. If there is an idle thread waiting on the queue, then the task producer hands off the task to that thread. Otherwise, since the queue is always full, the executor creates a new thread to handle that task.
+    * The cached pool starts with zero threads and can potentially grow to have Integer.MAX_VALUE threads. Practically, the only limitation for a cached thread pool is the available system resources.
+    * To better manage system resources, cached thread pools will remove threads that remain idle for one minute.
+    * Use Cases:
+        * It works best when we're dealing with a reasonable number of short-lived tasks. 
+        * We should avoid this thread pool when the execution time is unpredictable, like IO-bound tasks.
+
 
 ## References
 * [Thinking in Java](https://www.amazon.com/Thinking-Java-4th-Bruce-Eckel/dp/0131872486)
