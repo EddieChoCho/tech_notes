@@ -105,6 +105,58 @@
 
 ## II.JDBC and Database Essentials
 ### 3.JDBC Connection Management
+* The java.sql.Driver
+    * The java.sql.Driver is the main entry point for interacting with the JDBC API, defining the implementation version details and providing access to a database connection.
+    * JDBC defines four driver types(Being easier to setup and debug, the Type 4 driver is usually the preferred alternative.): 
+        * Type 1: It’s only a bridge to an actual ODBC driver implementation
+        * Type 2: It uses a database specific native client implementation (e.g. Oracle Call Interface)
+        * Type 3: It delegates calls to an application server offering database connectivity support
+        * Type 4: The JDBC driver implements the database communication protocol solely in Java.
+
+* java.sql.Connection
+    * To communicate to a database server, a Java program must first obtain a java.sql.Connection
+    
+##### 3.1 DriverManager
+* getConnection()
+    * Every time the getConnection() method is called, the DriverManager will request a new physical connection from the underlying Driver.
+    * Application -> DriverManager -> Driver -> Connection -> SocketFactory -> Socket -> Database
+    * Application <- DriverManager <- Driver <- Connection <- SocketFactory <- Socket <- Database
+    * Application          -(close)->           Connection      -(close)->     Socket
+* Two-tier architecture
+    * The application is run by single user, and each instance uses a dedicated database connection. 
+    * The more users, the more database connections are required.
+
+##### 3.2 DataSource
+* DriverManager is a physical connection factory, DataSource interface is a logical connection provider
+* Three-tier architecture
+* Advantages:
+    * As a database connection buffer
+		* The user request throughput is greater than the available database connection capacity. As long as the connection acquisition time is tolerable (from the end-user perspective), the user request can wait for a database connection to become available. 
+		* The middle layer acts as a database connection buffer that can mitigate user request traffic spikes by increasing request response time, without depleting database connections or discarding incoming traffic.
+	* Monitor connection
+		* Because the intermediate layer manages database connections, the application server can also monitor connection usage and provide statistics to the operations team.
+		* For this reason, instead of serving physical database connections, the application server provides only logical connections (proxies or handles), so it can intercept and register how the client API interacts with the connection object.
+
+* Accommodate multiple data sources or messaging queue implementations
+	* A distributed transaction manager becomes mandatory. In a JTA environment, the transaction manager must be aware of all logical connections the client has acquired as it has to commit or roll them back according to the global transaction outcome. 
+	* By providing logical connections, the application server can decorate the database connection handles with JTA transaction semantics.
+
+* DataSource without connection pooling
+    1. The application data layer asks the DataSource for a database connection
+    2. The DataSource will use the underlying driver to open a physical connection
+    3. A physical connection is created, and a TCP socket is opened
+    4. The DataSource under test does not wrap the physical connection, and it simply lends it to the application layer
+    5. The application executes statements using the acquired database connection
+    6. When the connection is no longer needed, the application closes the physical connection along with the underlying TCP socket.
+    
+* Connection pooling (Advantages of using database connections)
+    * It avoids both the database and the driver overhead for establishing a TCP connection
+    * It prevents destroying the temporary memory buffers associated with each database connection
+    * It reduces client-side JVM object garbage
+    * Prevent Oracle XE connection handling limitation issue
+        * The Oracle 11g Express Edition throws the following exception when running very short transactions without using a connection pooling solution:
+        * ORA-12516, TNS:listener could not find available handler with matching protocol stack
+
 ### 4.Batch Updates
 ### 5.Statement Caching
 ### 6.ResultSet Fetching
