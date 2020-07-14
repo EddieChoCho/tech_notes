@@ -157,6 +157,37 @@
         * The Oracle 11g Express Edition throws the following exception when running very short transactions without using a connection pooling solution:
         * ORA-12516, TNS:listener could not find available handler with matching protocol stack
 
+##### 3.2.1 Why is pooling so much faster?
+* The connection pooling mechanism
+    1. When a connection is being requested, the pool looks for unallocated connections
+    2. If the pool finds a free one, it handles it to the client
+    3. If there is no free connection, the pool tries to grow to its maximum allowed size
+    4. If the pool already reached its maximum size, it will retry several times before giving up with a connection acquisition failure exception
+    5. When the client closes the logical connection, the connection is released and returns to the pool without closing the underlying physical connection.
+    
+    * The connection pool does not return the physical connection to the client, but instead it offers a proxy or a handle. 
+    * When a connection is in use, the pool changes its state to `allocated` to prevent two concurrent threads from using the same database connection. 
+    * The proxy intercepts the connection close method call, and it notifies the pool to change the connection state to `unallocated`.
+    * The connection pool acts as a bounded buffer for the incoming connection requests. If there is a traffic spike, the connection pool will level it, instead of saturating all the available database resources.
+
+* Configuring the right pool size is important
+    * Provisioning the connection pool requires understanding the application-specific database access patterns and also connection usage monitoring.
+    
+* Two options to avoid system overloading:
+    * Discarding the overflowing traffic (affecting availability)
+    * Queuing requests and wait for busy resources to become available (increasing response time)
+        * The queue is prevented from growing indefinitely and saturating application server resources by putting an upper bound on the connection request wait time.
+
+##### 3.3 Queuing theory capacity planning
+* Little’s Law³ is a general-purpose equation applicable to any queueing system being in a stable state (the arrival rate is not greater than the departure rate).
+* Average number of requests (L): 
+    * L = λ × W
+    * L - average number of requests in the system (including both the requests being serviced and the ones waiting in the queue)
+    * λ - long-term average arrival rate
+    * W - average time a request spends in a system
+ * 
+
+
 ### 4.Batch Updates
 ### 5.Statement Caching
 ### 6.ResultSet Fetching
