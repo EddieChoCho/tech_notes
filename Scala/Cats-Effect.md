@@ -50,8 +50,10 @@
 	* Blocking a thread means that it is being wasted and nothing else can be scheduled to run on it. As mentioned, this can be very dangerous and it’s best to use dedicated thread pool for blocking operations. This way they won’t interfere with CPU-bound part of application.
 
 * Green Threads
-    * There are more types of threads and they depend on the platform. One of them is green thread. 
-    * The main difference between model represented by JVM Threads and Green Threads is that the latter aren’t scheduled on OS level.
+    * There are more types of threads and they depend on the platform. One of them is green thread.
+    * Green threads are threads that are scheduled by a runtime library or virtual machine (VM) instead of natively by the underlying operating system (OS).
+    * The main difference between model represented by JVM Threads and Green Threads is that the latter are not scheduled on OS level.
+    * Green threads emulate multithreaded environments without relying on any native OS abilities, and they are managed in user space instead of kernel space, enabling them to work in environments that do not have native thread support.
     * They are often characterized by cooperative multitasking which means the thread decides when it’s giving up control instead of being forcefully preempted, as happens on the JVM. 
     * This term is important for Cats Effect, whose Fiber and shift design have a lot of similarities with this model.
 
