@@ -1,3 +1,4 @@
+# Quartz
 
 ```java
 JobDetail job = newJob(HelloJob.class)
@@ -17,6 +18,7 @@ Trigger trigger = newTrigger()
 scheduler.scheduleJob(job, trigger);
 
 ```
+## JobStores
 
 * JobStores:
 	* RAMJobStore
@@ -46,6 +48,30 @@ scheduler.scheduleJob(job, trigger);
 	* Configuring Quartz to use TerracottaJobStore
 		* org.quartz.jobStore.class = org.terracotta.quartz.TerracottaJobStore
 		* org.quartz.jobStore.tcConfigUrl = localhost:9510
+		
+## Automatically Retry Failed Jobs in Quartz
 
-* Java Quartz Best Practices Example
-https://examples.javacodegeeks.com/enterprise-java/quartz/java-quartz-best-practices-example/
+*  Retry continuously until the job succeeds
+    * Throw a JobExecutionException with a flag to tell the scheduler to fire it again when the execution job fails.
+    ```java
+    public void execute(JobExecutionContext context) throws JobExecutionException {
+       try{
+           //do something
+       }
+       catch(Exception e){ 
+           JobExecutionException e2 = new JobExecutionException(e);
+           //fire it again
+           e2.refireImmediately();
+           throw e2;
+       }
+    }
+    ``` 
+* Retry n times and then disable the job.
+    * Use a retryCounter
+
+* Retry after specific time period.
+    *  Create another job with specific start time when the execution job fails.
+
+## References
+* [Java Quartz Best Practices Example](https://examples.javacodegeeks.com/enterprise-java/quartz/java-quartz-best-practices-example/)
+* [Automatically Retry Failed Jobs in Quartz](http://fahdshariff.blogspot.com/2010/12/automatically-retry-failed-jobs-in.html)
