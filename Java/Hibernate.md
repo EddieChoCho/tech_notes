@@ -89,6 +89,29 @@ the actual numbers of queries might be 1 + N.
 * Second level cache validate itself for modified entities, if modification has been done through hibernate session APIs.
 * If some user or process make changes directly in database, the there is no way that second level cache update itself until “timeToLiveSeconds” duration has passed for that cache region. In this case, it is good idea to invalidate whole cache and let hibernate build its cache once again. You can use below code snippet to invalidate whole hibernate second level cache.
 
+## How to fetch multiple entities by id with Hibernate 5
+### How to access the Hibernate Session from JPA
+You can call the unwrap() method of the EntityManger to get a Hibernate Session.
+```
+Session session = em.unwrap(Session.class);
+```
+### Load multiple entities by their primary key
+* Get a typed instance of the MultiIdentifierLoadAccess interface by calling the byMultipleIds(Class entityClass) method on the Hibernate Session.
+* Then called the multiLoad(K… ids) method. Hibernate creates one query for this method call and provides the multiple primary keys as parameters to an IN statement.
+### Load entities in multiple batches
+* There are different reasons to apply batching to these kinds of queries:
+    * Not all databases allow an unlimited number of parameters in IN statements.
+    * You might detect in your business logic that you don’t need all of them.
+    * You might want to remove a batch of entities from the 1st level cache before you fetch the next one.
+
+* Hibernate batch size configuration
+    * By default, Hibernate uses the batch size defined in the database specific dialect you use in your application. 
+        * Therefore, we don’t need to worry about database limitations. Hibernate’s default behaviour already takes care of it and it’s most often also good enough for performance critical use cases.
+    * But for thoes use cases in which you want to change the batch size. You can do this with the withBatchSize(int batchSize) method on the MultiIdentifierLoadAccess interface.
+        * Hibernate creates multiple select statements, if the number of provided primary keys exceeds the defined batchSize.
+### Don’t fetch entities already stored in 1st level cache
+* If you use a JPQL query to fetch a list of entities, Hibernate fetches all of them from the database and checks afterwards if they are already managed in the current session and stored in the 1st level cache. 
+* With the new MultiIdentifierLoadAccess interface, you can decide if Hibernate shall check the 1st level cache before it executes the database query. (It is deactivated by default, It can be activated by calling the enableSessionCheck(boolean enabled) method.
 
 ## References 
 
@@ -97,5 +120,6 @@ the actual numbers of queries might be 1 + N.
 * [3][How Hibernate Second Level Cache Works?](https://howtodoinjava.com/hibernate/how-hibernate-second-level-cache-works/)
 * [4][Hibernate Community Documentation - Chapter 6. Caching](https://docs.jboss.org/hibernate/orm/4.0/devguide/en-US/html/ch06.html)
 * [5][Hibernate SessionFactory](https://www.journaldev.com/3522/hibernate-sessionfactory)
+* [6][How to fetch multiple entities by id with Hibernate 5 By Thorben Janssen](https://thorben-janssen.com/fetch-multiple-entities-id-hibernate/)
 
 
