@@ -23,6 +23,34 @@ the actual numbers of queries might be 1 + N.
     * This could solve the problem completely, If the java code will access the association entities, the N + 1 problem still could happen.
 * Depend on the requirement, use join fetch.
 
+## Transactions and Concurrency
+* Through Session, which is also a transaction-scoped cache, Hibernate provides repeatable reads for lookup by identifier and entity queries and not reporting queries that return scalar values.
+
+### Session and transaction scopes
+* SessionFactory: A SessionFactory is an expensive-to-create, threadsafe object, intended to be shared by all application threads. It is created once, usually on application startup, from a Configuration instance.
+* Session: A Session is an inexpensive, non-threadsafe object that should be used once and then discarded for: a single request, a conversation or a single unit of work. A Session will not obtain a JDBC Connection, or a Datasource, unless it is needed. It will not consume any resources until used.
+* Database transaction: In order to reduce lock contention in the database, a database transaction has to be as short as possible. Long database transactions will prevent your application from scaling to a highly concurrent load.
+
+* What is the scope of a unit of work? 
+* Can a single Hibernate Session span several database transactions, or is this a one-to-one relationship of scopes? 
+* When should you open and close a Session and how do you demarcate the database transaction boundaries? 
+
+* Do not use the session-per-operation antipattern: 
+	* Do not open and close a Session for every simple database call in a single thread. 
+	* The same is true for database transactions. Database calls in an application are made using a planned sequence; they are grouped into atomic units of work. 
+	* This also means that auto-commit after every single SQL statement is useless in an application as this mode is intended for ad-hoc SQL console work. 
+	* Hibernate disables, or expects the application server to disable, auto-commit mode immediately. 
+	* Database transactions are never optional. All communication with a database has to occur inside a transaction. Auto-commit behavior for reading data should be avoided, as many small transactions are unlikely to perform better than one clearly defined unit of work.
+
+* The most common pattern: session-per-request
+	* A new Hibernate Session is opened, and all database operations are executed in this unit of work. 
+	* On completion of the work, and once the response for the client has been prepared, the session is flushed and closed.
+	* Use a single database transaction to serve the clients request, starting and committing it when you open and close the Session. The relationship between the two is one-to-one and this model is a perfect fit for many applications.
+	* Hibernate provides built-in management of the "current session" to simplify this pattern. 
+		* Start a transaction when a server request has to be processed, and end the transaction before the response is sent to the client.
+		* Your application code can access a "current session" to process the request by calling sessionFactory.getCurrentSession(). You will always get a Session scoped to the current database transaction.
+		* You can extend the scope of a Session and database transaction until the "view has been rendered". (especially useful in servlet applications)
+
 ## Hibernate SessionFactory 
 ### Session
 * Hibernate Session objects are not thread safe.
