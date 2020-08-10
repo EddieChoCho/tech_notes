@@ -51,6 +51,34 @@ the actual numbers of queries might be 1 + N.
 		* Your application code can access a "current session" to process the request by calling sessionFactory.getCurrentSession(). You will always get a Session scoped to the current database transaction.
 		* You can extend the scope of a Session and database transaction until the "view has been rendered". (especially useful in servlet applications)
 
+### Long conversations
+
+### Considering object identity
+
+* There are two different notions of identity
+	* Database Identity: foo.getId().equals( bar.getId() )
+	* JVM Identity: foo==bar
+
+* Therefore, An application can concurrently access the same persistent state in two different Sessions. But an instance of a persistent class is never shared between two Session instances. 
+
+* Within a Session
+	* The application does not need to synchronize on any business object, as long as it maintains a single thread per Session. Within a Session the application can safely use == to compare objects.
+
+* Outside of a Session
+	* The developer has to override the equals() and hashCode() methods in persistent classes and implement their own notion of object equality. 
+		* There is one caveat: never use the database identifier to implement equality. Use a business key that is a combination of unique, usually immutable, attributes. 
+
+### Common issues
+* A Session is not thread-safe. Things that work concurrently, like HTTP requests, session beans, or Swing workers, will cause race conditions if a Session instance is shared.
+
+* An exception thrown by Hibernate means you have to rollback your database transaction and close the Session immediately.
+	* Rolling back the database transaction does not put your business objects back into the state they were at the start of the transaction. This means that the database state and the business objects will be out of sync. 
+	* Usually this is not a problem, because exceptions are not recoverable and you will have to start over after rollback anyway.
+
+* The Session caches every object that is in a persistent state (watched and checked for dirty state by Hibernate). If you keep it open for a long time or simply load too much data, it will grow endlessly until you get an OutOfMemoryException. 
+	* One solution is to call clear() and evict() to manage the Session cache, but you should consider a Stored Procedure if you need mass data operations. 
+
+
 ## Hibernate SessionFactory 
 ### Session
 * Hibernate Session objects are not thread safe.
@@ -140,6 +168,51 @@ Session session = em.unwrap(Session.class);
 ### Don’t fetch entities already stored in 1st level cache
 * If you use a JPQL query to fetch a list of entities, Hibernate fetches all of them from the database and checks afterwards if they are already managed in the current session and stored in the 1st level cache. 
 * With the new MultiIdentifierLoadAccess interface, you can decide if Hibernate shall check the 1st level cache before it executes the database query. (It is deactivated by default, It can be activated by calling the enableSessionCheck(boolean enabled) method.
+
+## Improving performance
+
+### Fetching strategies
+* We have two orthogonal notions here: `when` is the association fetched and `how` is it fetched.
+* Fetch strategies can be declared in the O/R mapping metadata, or over-ridden by a particular HQL or Criteria query.
+* Hibernate defines the following fetching strategies
+    * Join fetching: Hibernate retrieves the associated instance or collection in the same SELECT, using an OUTER JOIN.
+    * Select fetching: a second SELECT is used to retrieve the associated entity or collection. Unless you explicitly disable lazy fetching by specifying lazy="false", this second select will only be executed when you access the association.
+    * Subselect fetching: a second SELECT is used to retrieve the associated collections for all entities retrieved in a previous query or fetch. Unless you explicitly disable lazy fetching by specifying lazy="false", this second select will only be executed when you access the association.
+    * Batch fetching: an optimization strategy for select fetching. Hibernate retrieves a batch of entity instances or collections in a single SELECT by specifying a list of primary or foreign keys.
+
+* Hibernate also distinguishes between
+    * Immediate fetching: an association, collection or attribute is fetched immediately when the owner is loaded.
+    * Lazy collection fetching: a collection is fetched when the application invokes an operation upon that collection. This is the default for collections.
+    * "Extra-lazy" collection fetching: individual elements of the collection are accessed from the database as needed. Hibernate tries not to fetch the whole collection into memory unless absolutely needed. It is suitable for large collections.
+    * Proxy fetching: a single-valued association is fetched when a method other than the identifier getter is invoked upon the associated object.
+    * "No-proxy" fetching: a single-valued association is fetched when the instance variable is accessed. Compared to proxy fetching, this approach is less lazy; the association is fetched even when only the identifier is accessed. It is also more transparent, since no proxy is visible to the application. This approach requires buildtime bytecode instrumentation and is rarely necessary.
+    * Lazy attribute fetching: an attribute or single valued association is fetched when the instance variable is accessed. This approach requires buildtime bytecode instrumentation and is rarely necessary.
+
+### Working with lazy associations
+* By default, Hibernate uses lazy select fetching for collections and lazy proxy fetching for single-valued associations.
+* Hibernate does not support lazy initialization for detached objects. Access to a lazy association outside of the context of an open Hibernate session will result in an exception.
+
+### Tuning fetch strategies
+* Select fetching (the default) is extremely vulnerable to N+1 selects problems, so we might want to enable join fetching in the mapping document.
+	* The fetch strategy defined in the mapping document affects:
+		* retrieval via get() or load()
+		* retrieval that happens implicitly when an association is navigated
+		* Criteria queries
+		* HQL queries if subselect fetching is used
+* The mapping document is not used to customize fetching. Instead, we keep the default behavior, and override it for a particular transaction.
+	* Using left join fetch in HQL. This tells Hibernate to fetch the association eagerly in the first select, using an outer join. 
+	* In the Criteria query API, you would use setFetchMode(FetchMode.JOIN).
+
+* A completely different approach to problems with N+1 selects is to use the second-level cache.
+
+### Single-ended association proxies
+* At startup, Hibernate generates proxies by default for all persistent classes and uses them to enable lazy fetching of many-to-one and one-to-one associations.
+* The mapping file may declare an interface to use as the proxy interface for that class, with the proxy attribute. 
+* By default, Hibernate uses a subclass of the class. The proxied class must implement a default constructor with at least package visibility. This constructor is recommended for all persistent classes.
+* TBD...
+
+### Best Practices
+* TBD...
 
 ## References 
 
