@@ -178,18 +178,106 @@
     * Queuing requests and wait for busy resources to become available (increasing response time)
         * The queue is prevented from growing indefinitely and saturating application server resources by putting an upper bound on the connection request wait time.
 
-##### 3.3 Queuing theory capacity planning
+#### 3.3 Queuing theory capacity planning
 * Little’s Law³ is a general-purpose equation applicable to any queueing system being in a stable state (the arrival rate is not greater than the departure rate).
 * Average number of requests (L): 
     * L = λ × W
     * L - average number of requests in the system (including both the requests being serviced and the ones waiting in the queue)
     * λ - long-term average arrival rate
     * W - average time a request spends in a system
- * 
+
+* TBD...
+
+#### 3.4 Practical database connection provisioning
+* FlexyPool: support for monitoring and failover strategies
+    * FlexyPool metrics
+        * concurrent connection requests:      How many connections are being requested at once
+        * concurrent connections:              How many connections are being used at once
+        * maximum pool size:                   If the target DataSource uses adaptive pool sizing, this metric shows how the pool size varies with time
+        * connection acquisition time:         The time it takes to acquire a connection from the target DataSource
+        * overall connection acquisition time: The total connection acquisition interval (including retries) retry attempts The connection acquisition retry attempts
+        * overflow pool size:                  How much the pool size can grow over the maximum size until timing out the connection acquisition request
+        * connection lease time:               The duration between the moment a connection is acquired and the time it gets released
+        
+    * Metrics are important for visualizing connection usage trends, in case of an unforeseen traffic spike.
+    * The connection acquisition time could reach the DataSource timeout threshold.
+    
+* Failover strategies
+    * The failover mechanism applies various strategies to prevent timed-out connection requests from being discarded.
+    * Default failover strategies of FlexyPool:
+        * Increment pool size on timeout: 
+            * The connection pool has a minimum size and, on demand, it can grow up to its maximum size.
+            * This strategy will increment the target connection pool maximum size on connection acquisition timeout.
+            * The overflow is a buffer of extra connections allowing the pool to grow beyond its initial maximum size, until it reaches the overflow size threshold.
+        * Retrying attempts:
+            * This strategy is useful for those connection pools lacking a connection acquiring retry mechanism, and it simply reattempts to fetch a connection for a given number of tries.
+##### 3.4.1 A real-life connection pool monitoring example
+* How FlexyPool failover strategies can determine the right connection pool size. Use a batch processor as example:
+* TBD...
 
 
 ### 4.Batch Updates
 ### 5.Statement Caching
+#### Statement lifecycle
+
+* The main database modules responsible for processing an SQL statement are the Parser, the Optimizer and the Executor.
+##### Parser
+* The statements are verified by Parser both 
+	* syntactically (the statement keywords must be properly spelled and following the SQL language guidelines) 
+	* and semantically (the referenced tables and column do exist in the database).
+##### Optimizer
+* For a given syntax tree, the database must decide the most efficient data fetching algorithm. Data is retrieved by following an access path.
+* Optimizer needs to evaluate multiple data traversing options like:
+	* the access method for each referencing table (table scan or index scan)
+	* for index scans, it must decide which index is better suited for fetching this result set
+	* for each joining relation (e.g. table, views or Common Table Expression), it must choose the best performing join type (e.g. Nested Loops Joins, Hash Joins, Sort Merge Joins)
+	* the joining order becomes very important especially for Nested Loops Joins.
+
+* The more time is spent on finding the best possible execution plan, the higher the transaction response time will get, so the Optimizer has a fixed time budget for finding a reasonable plan
+* The most common decision-making algorithm is CBO (Cost-Based Optimizer). 
+	* Each access method translates to a physical database operation, and its associated cost in resources can be estimated.
+	* The database stores various statistics like table sizes and data cardinality (how much the columnvalues differ from one row to the other) to evaluate the cost of a given database operation. 
+	* Time is the most common unit of cost, and the database estimates it based on the number of CPU cycles and I/O operations required by a particular execution.
+* When finding an optimal execution plan, the Optimizer might evaluate multiple options, and, based on their overall cost, it will choose the one requiring the least amount of time to execute.
+
+###### Execution plan visualization
+```
+SQL> EXPLAIN PLAN FOR SELECT COUNT(*) FROM post;
+SQL> SELECT plan_table_output FROM table(dbms_xplan.display());
+```
+
+##### Executor
+* The Executor makes use of:
+	* the Storage Engine (for loading data according to the current execution plan) 
+	* and the Transaction Engine (to enforce the current transaction data integrity guarantees).
+
+* The factors which impact overall transaction performance:
+	* In-memory buffer: It allows the database to reduce the I/O contention, therefore reducing transaction response time. 
+	* The consistency model: Since locks may be acquired to ensure data integrity, and the more locking, the less the chance for parallel execution.
+
+#### Caching performance gain
+* The net effect of reusing statements on the overall application performance.
+* Statement caching plays a very important role in optimizing high-performance OLTP (Online transaction processing) systems.
+
+#### Server-side statement caching
+* Because statement parsing and the execution plan generation are resource intensive operations, some database providers offer an execution plan cache. 
+	* The statement string value is used as input to a hashing function, and the resulting value becomes the execution plan cache entry key. 
+	* If the statement string value changes from one execution to the other, the database cannot reuse an already generated execution plan. 
+		* For this purpose, dynamic-generated JDBC Statement(s) are not suitable for reusing execution plans.
+
+#### Forced Parameterization
+* Some database systems offer the possibility of intercepting SQL statements at runtime, so that all value literals are replaced with bind variables. 
+* This way, the newly parametrized statement can reuse an already cached execution plan.
+* To enable this feature, each database system offers a vendor-specific syntax.
+	* Oracle: ALTER SESSION SET cursor_sharing=force;
+* Server-side prepared statements allow the data access logic to reuse the same execution plan for multiple executions. 
+* A PreparedStatement is always associated with a single SQL statement, and bind parameters are used to vary the runtime execution context. 
+	* Because PreparedStatement(s) take the SQL query at creation time, the database can precompile the associated SQL statement prior to executing it.
+
+* Precompilation phase
+	* During the precompilation phase, the database validates the SQL statement and parses it into a syntax tree. 
+	* When it comes to executing the PreparedStatement, the driver sends the actual parameter values, and the database can jump to compiling and running the actual execution plan
+
 ### 6.ResultSet Fetching
 ### 7.Transactions
 
