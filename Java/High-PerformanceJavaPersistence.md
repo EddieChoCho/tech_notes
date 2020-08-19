@@ -218,13 +218,14 @@
 
 ### 4.Batch Updates
 ### 5.Statement Caching
-#### Statement lifecycle
-
+#### 5.1 Statement lifecycle
 * The main database modules responsible for processing an SQL statement are the Parser, the Optimizer and the Executor.
+
 ##### Parser
 * The statements are verified by Parser both 
 	* syntactically (the statement keywords must be properly spelled and following the SQL language guidelines) 
 	* and semantically (the referenced tables and column do exist in the database).
+	
 ##### Optimizer
 * For a given syntax tree, the database must decide the most efficient data fetching algorithm. Data is retrieved by following an access path.
 * Optimizer needs to evaluate multiple data traversing options like:
@@ -255,11 +256,11 @@ SQL> SELECT plan_table_output FROM table(dbms_xplan.display());
 	* In-memory buffer: It allows the database to reduce the I/O contention, therefore reducing transaction response time. 
 	* The consistency model: Since locks may be acquired to ensure data integrity, and the more locking, the less the chance for parallel execution.
 
-#### Caching performance gain
+#### 5.2 Caching performance gain
 * The net effect of reusing statements on the overall application performance.
 * Statement caching plays a very important role in optimizing high-performance OLTP (Online transaction processing) systems.
 
-#### Server-side statement caching
+#### 5.3 Server-side statement caching
 * Because statement parsing and the execution plan generation are resource intensive operations, some database providers offer an execution plan cache. 
 	* The statement string value is used as input to a hashing function, and the resulting value becomes the execution plan cache entry key. 
 	* If the statement string value changes from one execution to the other, the database cannot reuse an already generated execution plan. 
@@ -277,9 +278,58 @@ SQL> SELECT plan_table_output FROM table(dbms_xplan.display());
 * Precompilation phase
 	* During the precompilation phase, the database validates the SQL statement and parses it into a syntax tree. 
 	* When it comes to executing the PreparedStatement, the driver sends the actual parameter values, and the database can jump to compiling and running the actual execution plan
+* TBD...	
+	
+#### 5.4 Client-side statement caching
 
+* JDBC driver can reuse already constructed statement objects. The main goals of the client-side statement caching can be summarized as follows:
+	* reducing client-side statement processing, which, in turn, lowers transaction response time
+	* sparing application resources by recycling statement objects along with their associated database-specific metadata.
+
+* In high-performance OLTP applications, transactions tend to be very short, so even a minor response time reduction can make a difference on the overall transaction throughput.
+
+##### Oracle statement caching
+* Oracle JDBC driver supports caching only for PreparedStatement(s) and CallableStatement(s). (SQL String becomes the cache entry key)
+* When enabling caching (it is disabled by default), the driver returns a logical statement, so when the client closes it, the logical statement goes back to the cache.
+
+* Implicit and explicit statement caching mechanisms:
+	* Both caching options share the same driver storage, which needs to be configured according to the current application requirements.
+	* Oracle implicit statement caching
+		* The implicit cache can only store statement metadata(which doesn’t change from one execution to the other). 
+		* It’s convenient to configure it at the DataSource level (all connections inheriting the same caching properties).
+
+    * Oracle explicit statement caching
+        * When using the explicit cache, the data access controls which statements are cacheable.
+
+		
 ### 6.ResultSet Fetching
 ### 7.Transactions
+#### 7.5 Read-only transactions
+* The JDBC Connection defines the setReadOnly(boolean readOnly)⁷ method which can be used to hint the driver to apply some database optimizations for the upcoming read-only transactions. 
+* This method shouldn’t be called in the middle of a transaction because the database system cannot turn a read-write transaction into a read-only one (a transaction must start as read-only from the very beginning)
+* Oracle
+	* According to the JDBC driver documentation the database server does not support read-only transaction optimizations. 
+	* Even when the read-only Connection status is set to true, modifying statements are still permitted, and the only way to restrict such statements is to execute the following SQL command:
+
+	```
+	connection.setAutoCommit(false);
+	try(CallableStatement statement = connection.prepareCall(
+	    "BEGIN SET TRANSACTION READ ONLY; END;")) {
+	    statement.execute();
+	}
+	```
+	* The SET TRANSACTION READ ONLY command must run after disabling the auto-commit status as otherwise it will only be applied for this particular statement only.
+
+##### Read-only transaction routing
+* Setting up a database replication environment is useful for both high-availability (a Slave can replace a crashing Master) and traffic splitting. 
+* In a Master-Slave replication topology, the Master node accepts both read-write and read-only transactions, while Slave nodes only take read-only traffic.
+
+#### 7.6 Transaction boundaries
+* When the unit of work consists of multiple SQL statements, the database should wrap them all in a single unit of work.
+* By default, every Connection starts in auto-commit mode, each statement being executed in a separate transaction. Unfortunately, it doesn’t work for multi-statement transactions as it moves atomicity boundaries from the logical unit of work to each individual statement.
+* Auto-commit should be avoided as much as possible, and, even for single statement transactions, it’s good practice to mark the transaction boundaries explicitly.
+
+
 
 ## III.JPA and Hibernate
 ### 8.Why JPA and Hibernate matter
