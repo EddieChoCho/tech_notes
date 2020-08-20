@@ -333,6 +333,38 @@ SQL> SELECT plan_table_output FROM table(dbms_xplan.display());
 
 ## III.JPA and Hibernate
 ### 8.Why JPA and Hibernate matter
+* the following JPA attributes have a peculiar behavior, which can surprise someone who’s familiar with the JPA specification only:
+	* the FlushModeType.AUTO¹ doesn’t trigger a flush for native SQL queries, like it does for JPQL or Criteria API
+	* the FetchType.EAGER² might choose an SQL join or a secondary select, whether the entity is fetched directly from the EntityManager or through a JPQL (Java Persistence Query Language) or a Criteria API query.
+
+### 8.3 Schema ownership
+* Although it might not fit any enterprise system, having the database as a central integration point can still be a choice for many reasonable size enterprise systems.
+* The relational database concurrency models offer strong consistency guarantees, therefore having a significant advantage to application development. 
+	* If the integration point doesn’t provide transactional semantics, it’s much more difficult to implement a distributed concurrency control mechanism.
+
+#### The distributed commit log
+* For very large enterprise systems, where data is split among different providers (relational database systems, caches, Hadoop, Spark), it’s no longer possible to rely on the relational database to integrate all disparate subsystems.
+
+* In this case, `Apache Kafka` offers a fault-tolerant and scalable append-only log structure, which every participating subsystem can read and write concurrently.
+	* The commit log becomes the integration point, each distributed node individually traversing it and maintaining client-specific pointers in the sequential log structure.
+	* This design resembles a database replication mechanism, and so it offers 
+		* durability (the log is persisted on disk)
+		* write performance (append-only logs don’t require random access) and 
+		* read performance (concurrent reads don’t require blocking) as well.
+
+* No matter what architecture style is chosen, there is still a need to correlate the transient Domain Model with the underlying persistent data.
+
+### 8.4 Write-based optimizations
+
+* JPA entity states
+	* New (Transient), Managed (Persistent), Detached, Removed.
+
+* The Persistence Context captures entity state changes, and, during flushing, it translates them to SQL statements.
+* The JPA EntityManager⁴ and the Hibernate Session⁵ (which includes additional methods for moving an entity from one state to the other) interfaces are gateways towards the underlying Persistence Context, and they define all the entity state transition operations.
+
+#### SQL injection prevention
+* Hibernate uses PreparedStatement(s) exclusively, so not only it protect against SQL injection, but the data access layer can better take advantage of server-side and client-side statement caching as well.
+
 ### 9.Connection Management and Monitoring
 ### 10.Mapping Types and Identifiers
 ### 11.Relationships
