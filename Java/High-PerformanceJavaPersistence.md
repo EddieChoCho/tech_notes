@@ -217,6 +217,13 @@
 
 
 ### 4.Batch Updates
+* Multiple DML statements can be grouped into a single database request.
+    * Sending multiple statements in a single request reduces the number of database roundtrips, therefore decreasing transaction response time.
+#### 4.1 Batching Statements
+
+#### 4.2 Batching PreparedStatements
+* Because a PreparedStatement is associated with a single DML statement, the batch update can group multiple parameter values belonging to the same prepared statement.
+
 ### 5.Statement Caching
 #### 5.1 Statement lifecycle
 * The main database modules responsible for processing an SQL statement are the Parser, the Optimizer and the Executor.
@@ -355,7 +362,6 @@ SQL> SELECT plan_table_output FROM table(dbms_xplan.display());
 * No matter what architecture style is chosen, there is still a need to correlate the transient Domain Model with the underlying persistent data.
 
 ### 8.4 Write-based optimizations
-
 * JPA entity states
 	* New (Transient), Managed (Persistent), Detached, Removed.
 
@@ -364,6 +370,41 @@ SQL> SELECT plan_table_output FROM table(dbms_xplan.display());
 
 #### SQL injection prevention
 * Hibernate uses PreparedStatement(s) exclusively, so not only it protect against SQL injection, but the data access layer can better take advantage of server-side and client-side statement caching as well.
+#### Write-behind cache
+* The Persistence Context acts as a transactional write-behind cache, deferring entity state flushing up until the last possible moment
+* Because every modifying DML statement requires locking (to prevent dirty writes), the write behind cache can reduce the database lock acquisition interval, therefore increasing concurrency.
+* But caches introduce consistency challenges, and the Persistence Context requires a flush prior to executing any JPQL or native SQL query (as otherwise it might break the read-your-own-write consistency guarantee).
+* Hibernate doesn’t automatically flush pending changes when a native query is about to be executed, and the application developer must explicitly instruct what database tables are needed to be synchronized.
+
+#### Transparent statement batching
+* Since all changes are being flushed at once, Hibernate may benefit from batching JDBC statements.
+* Batch updates can be enabled transparently, even after the data access logic has been implemented.
+* With just one configuration, Hibernate can execute all prepared statements in batches.
+
+#### Application-level concurrency control
+* TBD...
+
+### 8.5 Read-based optimizations
+* Following the SQL standard, the JDBC ResultSet is a tabular representation of the underlying fetched data. The Domain Model being constructed as an entity graph, the data access layer must transform the flat ResultSet into a hierarchical structure.
+* The source of data is not an in-memory repository, and the fetching behavior influences the overall data access efficiency.
+
+#### The fetching responsibility
+* Each business use case has different data access requirements, and one policy cannot anticipate all possible use cases, so the fetching strategy should always be set up on a query basis.
+
+#### Prefer projections for read-only views
+* Sometimes a custom projection (selecting only a few columns from an entity) is much more suitable, and the data access logic can even take advantage of database specific SQL constructs that might not be supported by the JPA query abstraction.
+
+#### The second-level cache
+* First-level cache
+	* If the Persistence Context acts as a transactional write-behind cache, its lifetime is bound to that of a logical transaction. 
+	* For this reason, the Persistence Context is also known as the first-level cache, and so it cannot be shared by multiple concurrent transactions.
+* Second-level cache
+	* The second-level cache is associated with an EntityManagerFactory, and all Persistence Contexts have access to it.
+	* The second-level cache can store entities as well as entity associations (one-to-many and many-to-many relationships) and even entity query results.
+* Each provider takes a different approach to caching (as opposed to EclipseLink, by default, Hibernate disables the second-level cache).
+* Although the second-level cache can mitigate the entity fetching performance issues, it requires a distributed caching implementation, which might not elude the networking penalties anyway.
+
+
 
 ### 9.Connection Management and Monitoring
 ### 10.Mapping Types and Identifiers
