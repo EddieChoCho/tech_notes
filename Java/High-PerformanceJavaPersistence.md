@@ -224,6 +224,27 @@
 #### 4.2 Batching PreparedStatements
 * Because a PreparedStatement is associated with a single DML statement, the batch update can group multiple parameter values belonging to the same prepared statement.
 
+##### 4.2.1 Choosing the right batch size
+* Finding the right batch size is not a trivial thing to do as there is no mathematical equation to solve the appropriate batch size for any enterprise application.
+* Measuring the application performance gain in response to a certain batch size value remains the most reliable tuning option.
+* Even a low batch size can reduce the transaction response time, and the performance gain doesn’t grow linearly with batch size. 
+* Although a larger batch value can save more database roundtrips, the overall performance gain remains relatively flat and can even drop for larger batch sizes.
+* You should always measure the performance improvement for various batch sizes. In practice, a relatively low value (between 10 and 30) is usually a good choice.
+
+##### 4.2.2 Bulk operations
+* SQL offers bulk operations to modify all rows that satisfy a given filtering criteria. 
+* Bulk update or delete statements can also benefit from indexing, just like select statements.
+* Bulk v.s Batch
+	* The bulk alternative is one order of magnitude faster than batching.
+	* Batch updates are more flexible since each row can take a different update logic. 
+	* Batch updates can also prevent lost updates if the data access logic employs an optimistic locking mechanism.
+	* Like with updates, bulk deleting is also much faster than deleting in batches.
+
+* Bulk processing caveats
+	* Processing too much data in a single transaction can degrade application performance, especially in a highly concurrent environment. 
+	* Writes always block other conflicting writes. (if using locks (two-phase locking) or MVCC (Multiversion Concurrency Control)) 
+	* In case the bulk updated records conflict with other concurrent transactions, then either the bulk update transaction might have to wait for some row-level locks to be released or other transactions might wait for the bulk updated rows to be committed.
+
 ### 5.Statement Caching
 #### 5.1 Statement lifecycle
 * The main database modules responsible for processing an SQL statement are the Parser, the Optimizer and the Executor.
