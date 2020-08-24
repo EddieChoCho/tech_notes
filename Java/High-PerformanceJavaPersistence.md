@@ -244,6 +244,23 @@
 	* Processing too much data in a single transaction can degrade application performance, especially in a highly concurrent environment. 
 	* Writes always block other conflicting writes. (if using locks (two-phase locking) or MVCC (Multiversion Concurrency Control)) 
 	* In case the bulk updated records conflict with other concurrent transactions, then either the bulk update transaction might have to wait for some row-level locks to be released or other transactions might wait for the bulk updated rows to be committed.
+	
+#### 4.3 Retrieving auto-generated keys
+* It’s important to know that auto-generated database identifiers might conflict with the batch insert process
+* Two auto incremented identifier strategies: an identity column or a database sequence generator
+* Not all database systems support fetching auto-generated keys from a batch of statements.
+
+##### 4.3.1 Sequences to the rescue
+* Database sequences offer the advantage of decoupling the identifier generation from the actual row insert. 
+* To make use of batch inserts, the identifier must be fetched prior to setting the insert statement parameter values.
+```
+Oracle
+SELECT post_seq.NEXTVAL FROM dual;
+```
+* Because the primary key is generated up-front, so batch inserts are not driver dependent anymore.
+* Sequence number generation optimizations
+	* It lowers the sequence call execution as much as possible. 
+	* If the number of inserted records is relatively low, then the sequence call overhead (extra database roundtrips) is insignificant.
 
 ### 5.Statement Caching
 #### 5.1 Statement lifecycle
