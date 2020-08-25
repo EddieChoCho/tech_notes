@@ -420,7 +420,19 @@ SQL> SELECT plan_table_output FROM table(dbms_xplan.display());
 * With just one configuration, Hibernate can execute all prepared statements in batches.
 
 #### Application-level concurrency control
-* TBD...
+* Optimistic locking
+	* The JPA optimistic locking mechanism allows preventing lost updates because it imposes a happens before event ordering. 
+	* But in multi-request conversations, optimistic locking requires maintaining old entity snapshots, and JPA makes it possible through Extended Persistence Contexts or detached entities.
+	* Persistence Context
+		* A Java EE application server can preserve a given Persistence Context across several web requests, therefore providing application-level repeatable reads.
+		* But this strategy is not free since the application developer must make sure the Persistence Context is not bloated with too many entities, which, apart from consuming memory, it can also affect the performance of the Hibernate default dirty checking mechanism.
+		
+* Merging detached entities
+	* JPA allows merging detached entities, which rebecome managed and automatically synchronized with the underlying database system.
+	
+* Pessimistic locking
+	* JPA also supports a pessimistic locking query abstraction, which comes in handy when using lowerlevel transaction isolation modes.
+	* Hibernate has a native pessimistic locking API, which brings support for timing out lock acquisition requests or skipping already acquired locks.
 
 ### 8.5 Read-based optimizations
 * Following the SQL standard, the JDBC ResultSet is a tabular representation of the underlying fetched data. The Domain Model being constructed as an entity graph, the data access layer must transform the flat ResultSet into a hierarchical structure.
