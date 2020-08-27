@@ -458,6 +458,16 @@ SQL> SELECT plan_table_output FROM table(dbms_xplan.display());
 
 ### 9.Connection Management and Monitoring
 
+#### 9.1 JPA connection management
+* The Java EE DataSource can be located through JNDI. In the persistence.xml configuration file.
+* The application developer must supply the JNDI name of the associated JTA or RESOURCE_LOCAL DataSource. 
+* The transaction-type attribute must also match the data source transaction capabilities.
+
+* For a Java EE application it’s perfectly fine to rely on the application server for providing a fullfeatured DataSource reference.
+* Stand-alone applications are usually configured using dependency injection rather than JNDI.
+* Because most enterprise applications need connection pooling and monitoring capabilities anyway. 
+* For this reason, JPA connection management is still an implementation specific topic, and the upcoming sections will dive into the connection provider mechanism employed by Hibernate.
+
 ##### 9.3.1 Hibernate statistics
 * Hibernate statistics gathers notifications related to database connections, Session transactions and even second-level caching usage.
 * For performance reasons, the statistics mechanism is disabled by default.
@@ -507,4 +517,16 @@ identity of its own.
 * Surrogate identifier: The primary key generated synthetically.
 
 ### 11.Relationships
+
+##### Mapping collections
+* Although @OneToMany, @ManyToMany or @ElementCollection are convenient from a data access perspective (entity state transitions can be cascaded from parent entities to children), they are definitely not free of cost. 
+* The price for reducing data access operations is paid in terms of result set fetching flexibility and performance. 
+A JPA collection binds a parent entity to a query that usually fetches all the associated child records.
+* Because of this, the entity mapping becomes sensitive to the number of child entries.
+
+* Even if a collection is fetched lazily, Hibernate might still require to fully load each entity when the collection is accessed for the first time. 
+* Although Hibernate supports extra lazy collection fetching, this is only a workaround and doesn’t address the root problem.
+
+* Alternatively, every collection mapping can be replaced by a data access query, which can use an SQL projection that’s tailored by the data requirements of each business use case. This way, the query can take business case specific filtering criteria.
+
 ### 12.Inheritance
