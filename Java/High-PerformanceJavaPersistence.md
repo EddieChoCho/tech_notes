@@ -528,5 +528,41 @@ A JPA collection binds a parent entity to a query that usually fetches all the a
 * Although Hibernate supports extra lazy collection fetching, this is only a workaround and doesn’t address the root problem.
 
 * Alternatively, every collection mapping can be replaced by a data access query, which can use an SQL projection that’s tailored by the data requirements of each business use case. This way, the query can take business case specific filtering criteria.
+#### 11.2 @ManyToOne (Unidirectional @ManyToOne relationship)
+* When using a @ManyToOne association, the underlying foreign key is controlled by the child-side, no matter the association is unidirectional or bidirectional.
+* Because the @ManyToOne association controls the foreign key directly, the automatically generated DML statements are very efficient.
+* Actually, the best performing JPA associations always rely on the child-side to translate the JPA state to the foreign key column value.
+* This is one of the most important rule in JPA relationship mapping, and it will be further emphasized for @OneToMany, @OneToOne and even @ManyToMany associations.
+
+#### 11.3 @OneToMany
+##### 11.3.1 Bidirectional @OneToMany
+* In a bidirectional association, only one side can control the underlying table relationship. 
+* For the bidirectional @OneToMany mapping, it’s the child-side @ManyToOne association in charge of keeping the foreign key column value in sync with the in-memory  Persistence Context. This is the reason that bidirectional @OneToMany relationship must define the mappedBy attribute, indicating that it only mirrors the @ManyToOne child-side mapping.
+* One of the major advantages of using a bidirectional association is that entity state transitions can be cascaded from the parent entity to its children.
+* The bidirectional @OneToMany association generates efficient DML statements because the @ManyToOne mapping is in charge of the table relationship. 
+* Because it simplifies data access operations as well, the bidirectional @OneToMany association is worth considering when the size of the child records is relatively low.
+
+##### Equality-based entity removal
+* The helper method for the child entity removal relies on the underlying child object equality for matching the collection entry that needs to be removed.
+* If the application developer doesn’t choose to override the default equals and hashCode methods, the java.lang.Object identity-based equality is going to be used.
+
+##### 11.3.2 Unidirectional @OneToMany
+* The unidirectional @OneToMany association is less efficient than the unidirectional @ManyToOne mapping or the bidirectional @OneToMany association.
+
+* The unidirectional @OneToMany association doesn’t map to a one-to-many table relationship. Because there is no @ManyToOne side to control this relationship, Hibernate uses a separate junction table to manage the association between a parent row and its child records.
+
+* It’s obvious that joining three tables is less efficient than joining just two. Because there are two foreign keys, there needs to be two indexes (instead of one), so the indexes memory footprint increases.
+* The unidirectional @OneToMany relationship is less efficient both for reading data (three joins are required instead of two), as for adding (two tables must be written instead of one) or removing (entries are removed and added back again) child entries.
+* Problems
+	* Need to executer more DML statements: The problem with this approach is that instead of a single junction table remove operation, the database has way more DML statements to execute.
+	* Index problem: If there is an index on each foreign key column (which is the default for many relational databases), the database engine must delete the associated index entries only to add back the remaining ones. The more elements a collection has, the less efficient a remove operation will get.
+
+##### 11.3.3 Ordered unidirectional @OneToMany
+* If the collection can store the index of every collection element, the unidirectional @OneToMany relationship can benefit for some element removal operations. 
+* First, an @OrderColumn annotation must be defined along the @OneToMany relationship mapping.
+* @OrderColumn v.s. @OrderBy JPA annotation
+	* @OrderColumn allows the JPA provider to materialize the element index into a dedicated database column so that the collection is sorted using an ORDER BY clause.
+	* @OrderBy does the sorting at runtime based on the ordering criteria provided by the @OrderBy annotation.
+* TBD...
 
 ### 12.Inheritance
