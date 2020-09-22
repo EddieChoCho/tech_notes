@@ -1,9 +1,11 @@
 # OWASP Top 10
 
 ## Injections
+* An injection of code happens when an attacker sends invalid data to the web application with the intention to make it do something different from what the application was designed/programmed to do.
 * When untrusted data is sent to an interpreter as part of a command or query. The attacker’s hostile data can trick the interpreter into executing unintended commands or accessing data without proper authorization.
 ### Solutions
 * Query Parameterization
+* Validation and sanitization
 
 ## Broken Authentication
 * Application functions related to authentication and session management are often implemented incorrectly, allowing attackers to compromise passwords, keys, or session tokens, or to exploit other implementation flaws to assume other users’ identities temporarily or permanently.
