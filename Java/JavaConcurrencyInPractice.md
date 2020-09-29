@@ -226,7 +226,22 @@
 ### Chapter 11 (Performance and Scalability)
 * TBD...
 ### Chapter 12 (Testing Concurrent Programs)
-* TBD...
+* Two major categories of failed cases - Safety and Liveness
+#### Safety - "nothing bad ever happens" 
+* e.g. test with cache size linked list - safety test would be to compare the cached count against the actual number of elements in the list.
+* This can be done by locking the list for exclusive access
+	* Employing some sort of "atomic snapshot" feature provided by the implementation,
+	* or by using "test points" provided by the implementation that let tests assert invariants or execute test code atomically.
+* Unfortunately, test code can introduce timing or synchronization artifacts that can mask bugs that might otherwise manifest themselves.	
+	* Bugs that disappear when you add debugging or test code are playfully called Heisenbugs
+
+#### Liveness - "something good eventually happens"
+* Liveness tests include tests of progress and nonͲprogress
+
+* Performance tests. Performance can be measured in a number of ways, including:
+	* Throughput: the rate at which a set of concurrent tasks is completed;
+	* Responsiveness: the delay between a request for and completion of some action (also called latency); or
+	* Scalability: the improvement in throughput (or lack thereof) as more resources (usually CPUs) are made available.
 
 ## Part IV - Advanced Topics 
 
