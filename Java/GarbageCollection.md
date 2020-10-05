@@ -32,5 +32,7 @@
 ## Further Readings
 
 * [ZGC for Future LINE HBase by Shinya Yoshida](https://github.com/EddieChoCho/tech-talks-note/blob/master/2019/ZGC_ForFutureLineHBase.md)
+* [Java Garbage Collection (GC) 簡介](https://medium.com/fcamels-notes/java-garbage-collection-%E7%B0%A1%E4%BB%8B-c52e5c5dbd55)
+
 
  
