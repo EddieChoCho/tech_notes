@@ -1,3 +1,7 @@
+## Latency and Bandwidth.
+* Bandwidth has only a minor impact on the response time but latencies have a huge impact. 
+* That means that the number of database round trips is more important for the response time than the amount of data transferred.
+
 ## Index and Table Access
 * INDEX UNIQUE SCAN
     * The INDEX UNIQUE SCAN performs the B-tree traversal only. 
@@ -31,14 +35,38 @@
 ## Joins
 Generally join operations process only two tables at a time. In case a query has more joins, they are executed sequentially: first two tables, then the intermediate result with the next table. In the context of joins, the term “table” could therefore also mean “intermediate result”.
 
-NESTED LOOPS JOIN
-Joins two tables by fetching the result from one table and querying the other table for each row from the first. See also “Nested Loops”.
+### Nested LOOPS JOIN
+* It works like using two nested queries: the outer or driving query to fetch the results from one table and a second query for each row from the driving query to fetch the corresponding data from the other table.
+* like N+1 selects problem cause by ORM tool
+* The nested loops join delivers good performance if the driving query returns a small result set. 
+* Otherwise, the optimizer might choose an entirely different join algorithm—like the hash join described in the next section, but this is only possible if the application uses a join to tell the database what data it actually needs.
 
-HASH JOIN
-The hash join loads the candidate records from one side of the join into a hash table that is then probed for each row from the other side of the join. See also “Hash Join”.
 
-MERGE JOIN
-The merge join combines two sorted lists like a zipper. Both sides of the join must be presorted. See also “Sort Merge”.
+### HASH JOIN
+* It loads the candidate records from one side of the join into a hash table that can be probed very quickly for each row from the other side of the join. 
+* Hash joins cannot perform joins that have range conditions in the join predicates (theta joins).
+
+#### Tuning a hash join
+Requires an entirely different indexing approach than the nested loops join. 
+##### The indexing strategy for a hash join
+* There is no need to index the join columns - Hash joins do not need indexes on the join predicates. They use the hash table instead.
+* Only indexes for independent where predicates improve hash join performance.-A hash join uses indexes only if the index supports the independent predicates.
+
+#### Other tips
+* Select fewer columns to improve hash join performance.
+    * Which is a challenge for most ORM tools.
+* Reduce the hash table size to improve performance; either horizontally (less rows) or vertically (less columns).
+
+### Sort Merge
+* The sort-merge join combines two sorted lists like a zipper. Both sides of the join must be sorted by the join predicates.
+
+#### Parts like hash join 
+* Need an index for the independent conditions to read all candidate records in one shot. 
+* Indexing the join predicates is useless. 
+
+### Parts different from hash join 
+* The join order does not make any difference—not even for performance. This property is very useful for outer joins. 
+
 
 ## Sorting and Grouping
 SORT ORDER BY
@@ -64,3 +92,7 @@ Aborts the underlying operations when the desired number of rows was fetched. Se
 
 WINDOW NOSORT STOPKEY
 Uses a window function (over clause) to abort the execution when the desired number of rows was fetched. See also “Using Window Functions for Efficient Pagination”.
+
+## References
+* [Explain the Explain by Maria Colgan](https://github.com/EddieChoCho/tech-talks-note/blob/master/2020/ExplainTheExplain.md)
+* [Use The Index, Luke!](https://use-the-index-luke.com/)
