@@ -10,7 +10,6 @@
 * Accessing the table
     * Even a single leaf node might contain many hits—often hundreds. 
     * The corresponding table data is usually scattered across many table blocks. That means that there is an additional table access for each hit.
-    * TBD...
 
 ### An index lookup requires three steps
 
@@ -82,10 +81,10 @@
 * To define an optimal index you must understand more than just how indexes work—you must also know how the application queries the data. 
     * This means you have to know the column combinations that appear in the where clause.      
  
-### Slow Indexes, Part II
+## Slow Indexes, Part II
 *  This section explains the way databases pick an index and demonstrates the possible side effects when changing existing indexes.
 
-#### The Query Optimizer
+### The Query Optimizer
 * The query optimizer, or query planner, is the database component that transforms an SQL statement into an execution plan. 
 * This process is also called compiling or parsing. There are two distinct optimizer types.
 
@@ -100,11 +99,14 @@
     
 ## Execution Plans
 * https://use-the-index-luke.com/sql/explain-plan
+### Oracle SQL execution plan cost column tips[3]
+* The cost column is supposed to be a guess of the number of single block disk reads required, but it's not very useful for SQL tuning.
 
 
 ### References 
 * [1][Slow Indexes, Part I](https://use-the-index-luke.com/sql/anatomy/slow-indexes)
 * [2][The Equality Operator](https://use-the-index-luke.com/sql/where-clause/the-equals-operator)
+* [3][Oracle SQL execution plan cost column tips](http://www.dba-oracle.com/t_sql_execution_plan_cost_column.htm)
     
 
 
