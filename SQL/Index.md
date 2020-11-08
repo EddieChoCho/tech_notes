@@ -103,6 +103,38 @@
 * The cost column is supposed to be a guess of the number of single block disk reads required, but it's not very useful for SQL tuning.
 
 
+## Functions 
+
+### Case-Insensitive Search with Function-Based Indexes 
+
+#### Using UPPER or LOWER with normal index
+* Table employee has an index on LAST_NAME column.
+* SELECT first_name, last_name, phone_number FROM employee WHERE UPPER(last_name) = UPPER('winand')
+* Database will use TABLE ACCESS FULL operation with filter-predicate(UPPER("LAST_NAME")='WINAND').
+
+#### Using UPPER or LOWER with function-based index
+* The database can use a function-based index if the exact expression of the index definition appears in an SQL statement.
+* CREATE INDEX emp_up_name ON employees (UPPER(last_name))
+* SELECT first_name, last_name, phone_number FROM employee WHERE UPPER(last_name) = UPPER('winand')
+* Database will use TABLE ACCESS BY INDEX ROWID and INDEX RANGE SCAN operations with access-predicate(UPPER("LAST_NAME")='WINAND').
+
+#### Warning - Sometimes ORM tools use UPPER and LOWER without the developer’s knowledge.
+* Hibernate, for example, [injects an implicit](https://use-the-index-luke.com/sql/myth-directory/dynamic-sql-is-slow#myth-dynamic-sql-sample) LOWER for case-insensitive searches.
+
+#### [Oracle Statistics for Function-Based Indexes](https://use-the-index-luke.com/sql/where-clause/functions/case-insensitive-search#sb-collecting-statistics)
+
+### User-Defined Functions
+* Function-based indexing is a very generic approach. Besides functions like UPPER you can also index expressions like A + B and even use user-defined functions in the index definition.
+* There is one important exception. It is, for example, not possible to refer to the current time in an index definition, neither directly nor indirectly.
+	* e.g. The function caculate the age with sysdate, the random number generators.
+	* The reason behind this limitation is simple. When inserting a new row, the database calls the function and stores the result in the index and there it stays, unchanged. The database updates the indexed value only when the date is changed by an update statement. 
+
+### Over-Indexing
+* Every index causes ongoing maintenance. Function-based indexes are particularly troublesome because they make it very easy to create redundant indexes.
+* To make one index suffice, you should consistently use the same function throughout your application.
+* See also [Chapter 8, “Modifying Data”](https://use-the-index-luke.com/sql/dml). 
+
+
 ### References 
 * [1][Slow Indexes, Part I](https://use-the-index-luke.com/sql/anatomy/slow-indexes)
 * [2][The Equality Operator](https://use-the-index-luke.com/sql/where-clause/the-equals-operator)
