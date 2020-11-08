@@ -134,6 +134,17 @@
 * To make one index suffice, you should consistently use the same function throughout your application.
 * See also [Chapter 8, “Modifying Data”](https://use-the-index-luke.com/sql/dml). 
 
+## Parameterized Queries
+
+* Bind parameters—also called dynamic parameters or bind variables—are an alternative way to pass data to the database. Instead of putting the values directly into the SQL statement, you just use a placeholder like ?, :name or @name and provide the actual values using a separate API call.
+
+### There are two good reasons to use bind parameters in programs:
+* Security: Bind variables are the best way to prevent SQL injection.
+* Performance:
+	* Databases with an execution plan cache like SQL Server and the Oracle database can reuse an execution plan when executing the same statement multiple times. 
+	* It saves effort in rebuilding the execution plan but works only if the SQL statement is `exactly` the same. If you put different values into the SQL statement, the database handles it like a different statement and recreates the execution plan.
+	* When using bind parameters you do not write the actual values but instead insert placeholders into the SQL statement. That way the statements do not change when executing them with different values. 
+
 
 ### References 
 * [1][Slow Indexes, Part I](https://use-the-index-luke.com/sql/anatomy/slow-indexes)
