@@ -99,8 +99,17 @@
     
 ## Execution Plans
 * https://use-the-index-luke.com/sql/explain-plan
+
+* How to run execution plan
+    ```
+    EXPLAIN PLAN FOR $SQL_STATEMENT;
+    SELECT * FROM TABLE(dbms_xplan.display);
+    ```
+
+
 ### Oracle SQL execution plan cost column tips[3]
 * The cost column is supposed to be a guess of the number of single block disk reads required, but it's not very useful for SQL tuning.
+
 
 
 ## Functions 
