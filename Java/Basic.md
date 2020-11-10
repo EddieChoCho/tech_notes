@@ -11,6 +11,10 @@
 * Overriding hashcode() alone doesn't force Java to ignore memory addresses when comparing two objects.
 * If the equals() is needed to be overridden, then we also need to override the hashcode() method.
 
+## Generics 
+* Bounds (e.g. ```<T extends AClass>```)
+* Wildcards (e.g. ```<? extends AClass>```)
+
 ## I/O [3]
 
 ### The File class 
@@ -93,6 +97,6 @@
 
 
 ## References
-[1][Working With hashcode() and equals() - by Hussein Terek](https://dzone.com/articles/working-with-hashcode-and-equals-in-java)
-[2][Code Review Best Practices - by Trisha Gee](https://youtu.be/a9_0UUUNt-Y)
-[3] [Thinking in Java(Java SE5/6)](https://www.amazon.com/Thinking-Java-4th-Bruce-Eckel/dp/0131872486)
+* [1][Working With hashcode() and equals() - by Hussein Terek](https://dzone.com/articles/working-with-hashcode-and-equals-in-java)
+* [2][Code Review Best Practices - by Trisha Gee](https://youtu.be/a9_0UUUNt-Y)
+* [3] [Thinking in Java(Java SE5/6)](https://www.amazon.com/Thinking-Java-4th-Bruce-Eckel/dp/0131872486)
