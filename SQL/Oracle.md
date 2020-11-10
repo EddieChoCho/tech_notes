@@ -8,3 +8,12 @@
     * [global temporary tables](http://www.dba-oracle.com/t_global_temporary_tables.htm)
 
 * You can also load the IN List" values into a PL/SQL collection and process this array as-if it was an Oracle table.
+* You also can use Guava's Lists.partition(List, int) method: 
+    ```
+    List<Table> result = ... 
+    for (List<Table> partition : Lists.partition(paramtersMoreThan1000, 100)) { 
+        // do something with partition 
+    }
+    ```
+    
+
