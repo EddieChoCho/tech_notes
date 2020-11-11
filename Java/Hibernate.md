@@ -214,6 +214,12 @@ Session session = em.unwrap(Session.class);
 ### Best Practices
 * TBD...
 
+## Hibernate-mapping v.s. JAP Annotations
+* Different OneToOne mappings
+    * [Hibernate one-to-one](https://docs.jboss.org/hibernate/core/3.3/reference/en/html/mapping.html#mapping-declaration-onetoone)
+    * [@OneToOne](https://docs.oracle.com/javaee/6/api/javax/persistence/OneToOne.html)
+* TBD... 
+
 ## References 
 
 * [1][Lesson 31 - N + 1 Selects Problem](https://youtu.be/KuCqVD9rDqA)
