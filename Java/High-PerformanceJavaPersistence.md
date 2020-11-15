@@ -565,4 +565,29 @@ A JPA collection binds a parent entity to a query that usually fetches all the a
 	* @OrderBy does the sorting at runtime based on the ordering criteria provided by the @OrderBy annotation.
 * TBD...
 
+#### 11.4 @OneToOne
+##### 11.4.1 Unidirectional @OneToOn
+* @OneToOne + @JoinColumn
+##### The shared primary key efficiency
+* The shared primary key approach reduces the memory footprint of the child-side table indexes since it requires a single indexed column instead of two. 
+    * The more records a child table has, the better the improvement gain for reducing the number of indexed columns.
+* The child entity can now be simply retrieved from the second-level cache, therefore preventing a database hit.
+
+* @MapsId
+    * The table relationship doesn’t feature any additional foreign key column since the child table primary key references the parent table primary key.
+    * Because child has the same identifier as the parent entity, it can be fetched without having to write a JPQL query.
+        ```
+        PostDetails details = entityManager.find(Child.class, parent.getId());
+        ```
+        * To optimize the use case, the query cache would be required as well, but the query cache is not without issues either.
+
+##### 11.4.2 Bidirectional @OneToOne
+* The parent-side defines a `mappedBy` attribute because the child-side (which can still share the primary key with its parent) is still in charge of this JPA relationship.
+    * @OneToOne(mappedBy = "fieldName")
+* Even if the association is lazy, when fetching a Post entity, Hibernate fetches the child entity as well.
+* Note: But the lazy association is still workable with the child-side entity. 
+        
+    
+#####
+
 ### 12.Inheritance
