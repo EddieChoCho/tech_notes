@@ -95,8 +95,42 @@
 ### New I/O
 * TBD...         
 
+### try-with-resources [4]
+* try-with-resources(introduced in Java 7) allows us to declare resources to be used in a try block with the assurance that the resources will be closed when after the execution of that block.
+* The resources declared must implement the AutoCloseable interface.
+* Resource must be both declared and initialized inside the try.
+
+* Replacing try–catch-finally With try-with-resources
+    ```
+    try (Scanner scanner = new Scanner(new File("test.txt"))) {
+        while (scanner.hasNext()) {
+            System.out.println(scanner.nextLine());
+        }
+    } catch (FileNotFoundException fnfe) {
+        fnfe.printStackTrace();
+    }
+    ```
+
+* try-with-resources With Multiple Resources
+    ```
+    try (Scanner scanner = new Scanner(new File("testRead.txt"));
+        PrintWriter writer = new PrintWriter(new File("testWrite.txt"))) {
+        while (scanner.hasNext()) {
+	    writer.print(scanner.nextLine());
+        }
+    }
+    ```
+
+* Resource Closing Order
+    * Initial all resource in order.
+    * Invoke code in the try block.
+    * Close the resource in reverse order.
+    
+* A try-with-resources block can still have the catch and finally blocks
+
 
 ## References
 * [1][Working With hashcode() and equals() - by Hussein Terek](https://dzone.com/articles/working-with-hashcode-and-equals-in-java)
 * [2][Code Review Best Practices - by Trisha Gee](https://youtu.be/a9_0UUUNt-Y)
-* [3] [Thinking in Java(Java SE5/6)](https://www.amazon.com/Thinking-Java-4th-Bruce-Eckel/dp/0131872486)
+* [3][Thinking in Java(Java SE5/6)](https://www.amazon.com/Thinking-Java-4th-Bruce-Eckel/dp/0131872486)
+* [4][Java – Try with Resources](https://www.baeldung.com/java-try-with-resources)
