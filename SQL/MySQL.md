@@ -1,5 +1,8 @@
 ### Keywords
 * OFFSET: like page, start with 0 index
+* UNION v.s. UNION ALL
+    * UNION command combines only distinct values of the result set of multiple SELECT statements. 
+    * UNION ALL command combines the result set of multiple SELECT statements (allows duplicate values, which has better performance).
 
 ### Consideration for null case
 * Soltuion-1: Take the result as a temp table
