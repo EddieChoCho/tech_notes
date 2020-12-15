@@ -195,7 +195,23 @@ public class Component{
 * Unexpectedly-long blocking with Future‘s get() method.
 	* Timeouts should be used to avoid unexpected waits.
 
+## Guide To CompletableFuture[3]
+
+### Running Multiple Futures in Parallel
+* CompletableFuture.allOf: The CompletableFuture.allOf static method allows to wait for completion of all of the Futures provided as a var-arg.
+```
+CompletableFuture<Void> combinedFuture = CompletableFuture.allOf(future1, future2, future3);
+combinedFuture.get();
+```
+
+* CompletableFuture.join(): It returns the combined results of all Futures.
+```
+String combined = Stream.of(future1, future2, future3)
+  .map(CompletableFuture::join)
+  .collect(Collectors.joining(" "));
+```
 
 ## References
 * [1][Thinking in Java](https://www.amazon.com/Thinking-Java-4th-Bruce-Eckel/dp/0131872486)
 * [2][A Guide to the Java ExecutorService | Baeldung](https://www.baeldung.com/java-executor-service-tutorial)
+* [3][Guide To CompletableFuture | Baeldung](https://www.baeldung.com/java-completablefuture)
