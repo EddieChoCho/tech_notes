@@ -207,6 +207,21 @@
         
     
 ### Chapter 4. (Composing Objects)
+#### 4.1. Designing a ThreadǦsafe Class
+* The design process for a threadͲsafe class should include these three basic elements:
+    * Identify the variables that form the object's state;
+    * Identify the invariants that constrain the state variables;
+    * Establish a policy for managing concurrent access to the object's state.
+
+* Synchronization policy 
+	* The synchronization policy defines how an object coordinates access to its state without violating its invariants or postͲ conditions. 
+	* It specifies what combination of immutability, thread confinement, and locking is used to maintain thread safety, and which variables are guarded by which locks. 
+	* To ensure that the class can be analyzed and maintained, document the synchronization policy.
+
+* 4.1.1. Gathering Synchronization Requirements
+    * You cannot ensure thread safety without understanding an object's invariants and post-conditions(https://en.wikipedia.org/wiki/Postcondition).
+    * Constraints on the valid values or state transitions for state variables can create atomicity and encapsulation requirements.
+    
 * TBD...
 ### Chapter 5 (Building Blocks)
 * TBD...
