@@ -23,6 +23,72 @@ the actual numbers of queries might be 1 + N.
     * This could solve the problem completely, If the java code will access the association entities, the N + 1 problem still could happen.
 * Depend on the requirement, use join fetch.
 
+## Persistence Context[7]
+* Both the org.hibernate.Session API and javax.persistence.EntityManager API represent a context for dealing with persistent data. This concept is called a persistence context. 
+* Persistent data has a state in relation to both a persistence context and the underlying database.
+
+### Bytecode Enhancement
+* Capabilities
+    * Lazy attribute loading, e.g. LazyGroup
+    * In-line dirty tracking
+    * Bidirectional association management
+* Performing enhancement
+* Maven plugin
+    * TBD...
+
+## Flushing[7]
+* Flushing is the process of synchronizing the state of the persistence context with the underlying database. 
+    * The EntityManager and the Hibernate Session expose a set of methods, through which the application developer can change the persistent state of an entity.
+    * The persistence context acts as a transactional write-behind cache, queuing any entity state change. 
+    * Like any write-behind cache, changes are first applied in-memory and synchronized with the database during the flush time.
+
+### Flushing strategies
+* The flushing strategy is given by the flushMode of the current running Hibernate Session. 
+* Although JPA defines only two flushing strategies (AUTO and COMMIT), Hibernate has a much broader spectrum of flush types:
+  * ALWAYS: Flushes the Session before every query.
+  * AUTO: This is the default mode, and it flushes the Session only if necessary.
+  * COMMIT: The Session tries to delay the flush until the current Transaction is committed, although it might flush prematurely too.
+  * MANUAL: The Session flushing is delegated to the application, which must call Session.flush() explicitly in order to apply the persistence context changes.
+ 
+#### AUTO flush
+* By default, Hibernate uses the AUTO flush mode which triggers a flush in the following circumstances:
+    * prior to committing a Transaction
+        ```
+        entityManager = entityManagerFactory().createEntityManager();
+        txn = entityManager.getTransaction();
+        txn.begin();
+    
+        Person person = new Person( "John Doe" );
+        entityManager.persist( person );
+        log.info( "Entity is in persisted state" );
+    
+        txn.commit();
+        ```
+        ```
+        --INFO: Entity is in persisted state
+        INSERT INTO Person (name, id) VALUES ('John Doe', 1)
+
+        ```
+    * prior to executing a JPQL/HQL query that overlaps with the queued entity actions
+        ```
+        Person person = new Person( "John Doe" );
+        entityManager.persist( person );
+        entityManager.createQuery( "select p from Advertisement p" ).getResultList();
+        entityManager.createQuery( "select p from Person p" ).getResultList();
+        ```
+        ```
+        SELECT a.id AS id1_0_ ,
+               a.title AS title2_0_
+        FROM   Advertisement a
+        
+        INSERT INTO Person (name, id) VALUES ('John Doe', 1)
+        
+        SELECT p.id AS id1_1_ ,
+               p.name AS name2_1_
+        FROM   Person p
+        ```
+    * before executing any native SQL query(using Session/EntityManager) that has no registered synchronization
+
 ## Transactions and Concurrency
 * Through Session, which is also a transaction-scoped cache, Hibernate provides repeatable reads for lookup by identifier and entity queries and not reporting queries that return scalar values.
 
@@ -228,5 +294,6 @@ Session session = em.unwrap(Session.class);
 * [4][Hibernate Community Documentation - Chapter 6. Caching](https://docs.jboss.org/hibernate/orm/4.0/devguide/en-US/html/ch06.html)
 * [5][Hibernate SessionFactory](https://www.journaldev.com/3522/hibernate-sessionfactory)
 * [6][How to fetch multiple entities by id with Hibernate 5 By Thorben Janssen](https://thorben-janssen.com/fetch-multiple-entities-id-hibernate/)
+* [7][Hibernate User Guide](https://docs.jboss.org/hibernate/orm/5.4/userguide/html_single/Hibernate_User_Guide.html)
 
 
