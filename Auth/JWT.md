@@ -20,7 +20,9 @@
 * If the token is sent in the `Authorization` header, Cross-Origin Resource Sharing (CORS) won't be an issue as it doesn't use cookies.
 
 * Do note that with signed tokens, all the information contained within the token is exposed to users or other parties, even though they are unable to change it. This means you should not put secret information within the token.
-    
+
+## JWT vs Server-side session
+https://stackoverflow.com/questions/43452896/authentication-jwt-usage-vs-session
 
 ## References
 * [1][Introduction to JSON Web Tokens](https://jwt.io/introduction)
