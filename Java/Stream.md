@@ -21,6 +21,26 @@
 * Terminal operation: such as forEach or reduce.
     * Terminal operations may traverse the stream to produce a result or a side-effect. 
     * After the terminal operation is performed, the stream pipeline is considered consumed, and can no longer be used.
+
+### Parallelism[1]
+* Streams facilitate parallel execution by reframing the computation as a pipeline of aggregate operations, rather than as imperative operations on each individual element. 
+* All streams operations can execute either in serial or in parallel.
+* Collection.stream() and Collection.parallelStream(),  BaseStream.sequential() and BaseStream.parallel(), isParallel().
+    * Note - last call wins[3]:
+	```
+    .parallel()
+	.sequential()
+	.parallel()
+	.sequential()
+    ```
+* Except for operations identified as explicitly non-deterministic, such as findAny(), whether a stream executes sequentially or in parallel should not change the result of the computation.
+* Most stream operations accept parameters that describe user-specified behavior, which are often lambda expressions. To preserve correct behavior, these behavioral parameters must be `non-interfering`, and in most cases must be `stateless`.
+* Parallel and reduce[3]
+	* Use reduce with parallel will execute extra times than sequential?
+	* Should use identity value(e.g 0) instead of the non-identity value(e.g. 21)
+	```
+    .reduce(0, (total, e) -> add(total, e)) + 21;
+    ```   
 	 
 ### Laziness[3]
 * Stream does not execute a function on a collection of data
