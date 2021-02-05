@@ -41,6 +41,25 @@
 	```
     .reduce(0, (total, e) -> add(total, e)) + 21;
     ```   
+        
+### Non-interference[1]
+* Streams enable you to execute possibly-parallel aggregate operations over a variety of data sources, including even non-thread-safe collections such as ArrayList.
+* This is possible only if we can prevent interference with the data source during the execution of a stream pipeline.
+* For most data sources, preventing interference means ensuring that the data source is not modified at all during the execution of the stream pipeline.
+* The notable exception to this are streams whose sources are concurrent collections, which are specifically designed to handle concurrent modification. Concurrent stream sources are those whose `Spliterator` reports the `CONCURRENT` characteristic.
+
+### Stateless behaviors[1]
+Stream pipeline results may be nondeterministic or incorrect if the behavioral parameters to the stream operations are stateful. 
+	```
+     Set<Integer> seen = Collections.synchronizedSet(new HashSet<>());
+     stream.parallel().map(e -> { if (seen.add(e)) return 0; else return e; })...
+     ```
+ 	* If the mapping operation is performed in parallel, the results for the same input could vary from run to run, due to thread scheduling differences.
+* Note also that attempting to access mutable state from behavioral parameters presents you with a bad choice with respect to safety and performance; 
+	* Do not synchronize access to that state -> data race.
+	* Do synchronize access to that state ->  you risk having contention undermine the parallelism you are seeking to benefit from. 
+
+* The best approach is to use stateless behavioral parameters, stateless lambda expression.
 	 
 ### Laziness[3]
 * Stream does not execute a function on a collection of data
