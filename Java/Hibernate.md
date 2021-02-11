@@ -339,6 +339,60 @@ Session session = em.unwrap(Session.class);
     * Perform "version checks" using either all of the entity’s attributes or just the attributes that have changed.
     * org.hibernate.annotations.OptimisticLockType
     
+### Pessimistic locking
+* Typically, you only need to specify an isolation level for the JDBC connections and let the database handle locking issues. 
+* If you do need to obtain exclusive pessimistic locks or re-obtain locks at the start of a new transaction, Hibernate gives you the tools you need.
+* Note: Hibernate always uses the locking mechanism of the database, and never lock objects in memory.
+
+#### LockMode and LockModeType
+* JPA comes with its own LockModeType enumeration which defines similar strategies as the Hibernate-native LockMode.
+* The explicit user request lock mode occurs as a consequence of any of the following actions:
+    * a call to Session.load(), specifying a LockMode.
+        * If you call Session.load() with option UPGRADE, UPGRADE_NOWAIT or UPGRADE_SKIPLOCKED, and the requested object is not already loaded by the session, the object is loaded using SELECT …​ FOR UPDATE.
+        * If you call load() for an object that is already loaded with a less restrictive lock than the one you request, Hibernate calls lock() for that object.
+        
+    * a call to Session.lock().
+        * Session.lock() performs a version number check if the specified lock mode is READ, UPGRADE, UPGRADE_NOWAIT or UPGRADE_SKIPLOCKED. In the case of UPGRADE, UPGRADE_NOWAIT or UPGRADE_SKIPLOCKED, the SELECT …​ FOR UPDATE syntax is used.
+    
+    * a call to Query.setLockMode().
+
+* If the requested lock mode is not supported by the database, Hibernate uses an appropriate alternate mode instead of throwing an exception. This ensures that applications are portable.
+
+#### The buildLockRequest API
+* Traditionally, Hibernate offered the Session#lock() method for acquiring an optimistic or a pessimistic lock on a given entity. 
+* Because varying the locking options was difficult when using a single LockMode parameter, Hibernate has added the Session#buildLockRequest() method API.
+
+#### Follow-on-locking
+* When using Oracle, the FOR UPDATE exclusive locking clause cannot be used with:
+  1. DISTINCT
+  2. GROUP BY
+  3. UNION
+  4. inlined views (derived tables), therefore, affecting the legacy Oracle pagination mechanism as well.
+
+* For this reason, Hibernate uses secondary selects to lock the previously fetched entities.
+* Follow-on-locking example:
+    * To avoid the N+1 query problem, a separate query can be used to apply the lock using the associated entity identifiers.
+```
+List<Person> persons = entityManager.createQuery(
+	"select DISTINCT p from Person p", Person.class)
+.setLockMode( LockModeType.PESSIMISTIC_WRITE )
+.getResultList();
+```
+```sql
+SELECT DISTINCT p.id as id1_0_, p."name" as name2_0_
+FROM Person p
+
+SELECT id
+FROM Person
+WHERE id = 1 FOR UPDATE
+
+SELECT id
+FROM Person
+WHERE id = 1 FOR UPDATE
+```
+* Secondary query entity locking (TBD...)
+* Disabling the follow-on-locking mechanism explicitly (TBD..)
+
 ## References 
 
 * [1][Lesson 31 - N + 1 Selects Problem](https://youtu.be/KuCqVD9rDqA)
