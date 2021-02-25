@@ -46,7 +46,15 @@
 * TBD...
 
 ## Object Class
-* TBD...
+* An object class is "an identified family of objects (or conceivable objects) that share certain characteristics".
+* Object classes are used in the Directory for a number of purposes:
+	* Describing and categorizing objects and the entries that correspond to these objects.
+	* Where appropriate, controlling the operation of the Directory.
+	* Regulating, in conjunction with DIT structure rule specifications, the position of entries in the DIT.
+		* e.g. An organizationalUnit is under an organization.
+	* Regulating, in conjunction with DIT content rule specifications, the attributes that are contained in entries.
+		* e.g. An organizationalUnit must have an `ou` attribute and may have postalAddress and postalCode attributes.
+	* Identifying classes of entry that are to be associated with a particular policy by the appropriate administrative authority.
 
 ## References
 * [RFC4512 - LDAP: Directory Information Models](https://tools.ietf.org/html/rfc4512)
