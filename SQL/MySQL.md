@@ -3,6 +3,9 @@
 * UNION v.s. UNION ALL
     * UNION command combines only distinct values of the result set of multiple SELECT statements. 
     * UNION ALL command combines the result set of multiple SELECT statements (allows duplicate values, which has better performance).
+* GROUP BY 
+    * As a general rule, the SELECT clause may only contain columns with a unique value per group. 
+    * This includes columns that appear in the GROUP BY clause as well as aggregates resulting in one value per group.
 
 ### Consideration for null case
 * Soltuion-1: Take the result as a temp table
