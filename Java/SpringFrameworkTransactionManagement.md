@@ -43,7 +43,8 @@
     * Such partial rollbacks allow an inner transaction scope to trigger a rollback for its scope, with the outer transaction being able to continue the physical transaction despite some operations having been rolled back. 
     * This setting is typically mapped onto JDBC savepoints, so will only work with JDBC resource transactions. (DataSourceTransactionManager)
 
-    
-    
+## References
+* [16. Transaction Management](https://docs.spring.io/spring-framework/docs/4.2.x/spring-framework-reference/html/transaction.html)
+* [Spring Transaction Propagation in a Nutshell](https://dzone.com/articles/spring-transaction-propagation)
 
 
