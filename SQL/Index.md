@@ -1,3 +1,93 @@
+# Index
+
+## Terminology
+* Search key: every index has an associated search key
+* Primary index: search key contains primary key
+* Secondary index: search key does not contain primary key
+
+## Hash-Based Indexes
+* Designed for equality selections
+* Uses a hashing function
+	* Search values -> bucket numbers
+* Bucket
+	* Primary page plus zero or more overflow pages
+* Based on static or dynamic hashing techniques
+
+### Static Hashing
+* The number of bucket N is fixed
+* Overflow pages if needed
+* h(k) mod N = bucket to which data entry with key k belongs
+* Records having the same hash value are stored in the same bucket
+* Search Cost of Static Hashing
+	* Assume index has B blocks and has N buckets
+	* Then each bucket is about B/N blocks long
+* Limitation of Static Hashing
+	* Seach cost: B/N
+	* To increase efficiency, we need to increase the #buckets(N): Best when 1 block per bucket
+	* However, a large #buckets leads to wasted space: empty pages waiting the index to grow into it.
+	* Hard to decide the number of #buckets.
+	* Double the number of #buckets when a bucket is full is not a good idea - Redistributing records(re-hash) is costly
+
+### Extendable Hash Indexes
+* Use directory: pointers to buckets
+* Double #buckets by doubling the directory, no need for re-hash
+* Splitting just the bucket that overflowed
+* Global depth of directory: Max #bits needed to tell which bucket an entry belongs to
+* Local depth of a bucket: #bits used the determine if an entry belongs to this bucket
+* Remarks
+	* At most 1 pag split for each insert
+	* Cheap doubling
+		* When local depth of bucket = global depth
+		* Only 3 page access(1 directory page, 2 data pages)
+	* Still has overflow page
+		* But only when there are a lot of records with same key value
+
+### Is Hash-Based Index Good Enough?
+* Hash-based indexes are good for equality selection
+* However, cannot support rande searches
+* We now consider an index structured as a search tree
+	* Speeds up search by storing values
+	* Supports both range  and equality selections
+
+## B-Tree Indexes
+* Index records are sorted on dataVal in each page
+* M-way balanced search tree
+	* O(logM(#data-records)) for equality search & update
+	* O(#data-records) for range search
+
+### Searching: Finding all index records having a specified dataValue v
+* Search begins at root
+* Fetches child block pointed by parent util leaf
+	* Search cost: O(tree height), usually < 5
+
+### Insertion
+* Step1: Search the index with the inserted dataVal
+* Step2: Insert the new index record into the target lead block
+* What if the block has no more room? Split it
+* Splitting
+	1. Allocate a new block in the index file
+	2. Move the high-valued half of the index record into this new block
+	3. Create a directory record for the new block(New directory record has the dataVal of the first value in the new block)
+	4. Insert the new directory record into the same level-0 directory block
+	5. Recursively split directory block if necessary
+	* Update cost: O(tree height)
+
+* Duplicate DataVals
+	* When splitting a leaf block, we must place all records with same dataVal in same block
+	* What if there are too many records with same dataVal? -> Overflow blocks
+
+* Overflow Blocks
+	* Keep records of the same dataVal
+	* Chained by primary blocks
+	* First dataVal in primary leaf block = dataVal in overflow block
+
+### Deletion
+1. Search the index with the target dataVal
+2. Delete the index record in a leaf block
+3. Move the next records one-slot ahead
+4. Merge blocks if #records is less than a threshold
+5. Recursive delete on parents
+
 ## Slow Indexes, Part I
 
 * Rebuilding an index does not improve performance on the long run.
@@ -159,6 +249,7 @@
 * [1][Slow Indexes, Part I](https://use-the-index-luke.com/sql/anatomy/slow-indexes)
 * [2][The Equality Operator](https://use-the-index-luke.com/sql/where-clause/the-equals-operator)
 * [3][Oracle SQL execution plan cost column tips](http://www.dba-oracle.com/t_sql_execution_plan_cost_column.htm)
+* [4][Introduction to Database System by Shan-Hung Wu](https://www.youtube.com/playlist?list=PLS0SUwlYe8cyln89Srqmmlw42CiCBT6Zn)
     
 
 
