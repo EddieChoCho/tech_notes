@@ -59,5 +59,30 @@
 	* Ready queue(Ready State) - set of all processes residing in main memory, `ready and waiting to execute`
 	* Device queue(Wait State) - set of processes `waiting for an I/O device`
 
+### Schedulers
+* Short-term scheduler(`CPU scheduler`) - selects which process should be executed and `allocated CUP(Ready state -> Run state)`
+* Long-term scheduler(`job scheduler`) - select which processes should be `loaded into memory` and brought into the ready queue`(New state -> Ready state)`
+* Medium-term scheduler - select which processes should be `swapped in/out memory(Ready state -> Wait state)`
+
+#### Long-Term scheduler
+* Control degree of multiprogramming
+* Execute less frequently(e.g. invoked only when a process leaves the system or `once several minutes`)
+* Select a `good mix of of CPU-bound & I/O-bound` processes to increase system overall performance
+* UNIX/NT: no long-term scheduler
+	* Created process placed in memory for short-term scheduler
+	* Multiprogramming degree is bounded by hardware limitation or on the self-adjusting nature of users
+
+#### Short-Term Scheduler
+* Execute quite frequently(e.g. once per 100ms)
+* The scheduling algorithm must be efficient to reduce the overhead
+
+#### Medium-Term Scheduler
+* swap in/out between memory and disk
+* `swap out`: removing processes from memory to reduce the degree of multiprogramming
+* `swap in`: reintroducing swap-out processes into memory
+* Purpose: improve process mix, free up memory
+* Most modern OS doesn't have medium-term scheduler because having sufficient physical memory or using virtual memory
+
+
 # References
 * [Operating System Course by Jerry Chou](https://www.youtube.com/playlist?list=PLS0SUwlYe8czigQPzgJTH2rJtwm0LXvDX)
