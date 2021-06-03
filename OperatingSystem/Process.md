@@ -83,6 +83,49 @@
 * Purpose: improve process mix, free up memory
 * Most modern OS doesn't have medium-term scheduler because having sufficient physical memory or using virtual memory
 
+## Operations on Processes
+
+* Tree of Processes
+	* pid: each process is identified by a unique processor identifier
+
+### Process Creation
+* Resource sharing
+	* Parent and child processes share all resources
+	* Child process shares subset of parent's resources
+	* Parent and child share no resources
+
+* Two possibilities of execution
+	* Parent and children `execute concurrently`
+	* Parent `waits until children terminate`
+
+* Two possibilities of address space
+	* `Child duplicate of parent`, communication via sharing variables
+	* `Child has a program loaded into it`, communication vua message passing
+
+#### UNIX/Linux Process Creation
+* `fork` system call
+	* Create a new(child) process
+	* The new process `duplicates the address space` of it's parent
+	* Child & Parent `execute concurrently` after fork
+	* Child: return value of fork is 0
+	* Parent: return value of fork is PID of the child process
+
+* `execlp` system call
+	* `Load a new binary file` into memory - `destroy the old code`
+* `wait` system call
+	* The parent waits for `one of its child processes` to complete
+
+* Memory space of fork():
+	Old implementation: Child is an `exact copy` of parent
+	Current implementation: use `copy-on-wrote` technique to store `differences in child address space`
+
+### Process Termination
+* Terminate when the last statement is executed or `exit()` is called
+	* All resources of the process, including physical & virtual memory, open files, I/O buffers are `deallocated by the OS`
+
+* Parent may terminate execution of children processes by specifying its PID (`abort`)
+* Cascading termination: killing(exiting) parent -> killing(exiting) all its children
+
 
 # References
 * [Operating System Course by Jerry Chou](https://www.youtube.com/playlist?list=PLS0SUwlYe8czigQPzgJTH2rJtwm0LXvDX)
