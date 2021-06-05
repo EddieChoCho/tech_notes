@@ -113,5 +113,127 @@
 	* Shuffle the memory contents to place all free memory together in one large block `at execution time`
 	* Only if binding is done at execution time
 
+## Non-Contiguous Memory Allocation - Paging
+* Paging Concept
+	* Methods
+		* `Frames`: Divide physical memory into fixed-sized blocks
+		* `Pages`: Divide logical address space into blocks of the `same size`
+		* To run a program of n pages, need to find n free frames and load the program
+		* `keep track of free frames`
+		* Step up a `page table` to translate logical to physical addresses
+
+	* Benefit
+		* Allow the physical-address space of the process to be `noncontiguous`
+		* Avoid external fragmentation
+		* Limited internal fragmentation(factor: size of a page)
+		* Provide `shared memory/pages`
+
+* Page table
+	* Each entry maps to the `base address of a page` in physical memory
+	* A structure maintained by OS `for each process`
+		* Page table includes only pages owned by a process
+		* A process cannot access memory outside its space
+
+### Address Translation Scheme
+* Logical address is divided into two parts
+	* `Page number(p)`
+		* used as an index into a page table which contains base address of each page in physical memory
+		* N bits means a process can allocate `at most (2 raised to the power of N) pages` -> (2 raised to the power of N) multiply page size memory size
+
+	* `Page offset(d)`
+		* combined with base address to define the physical memory address that is sent to the memory unit
+		* N bits means the page size is `2 raised to the power of N`
+
+* Physical address = page base address + page offset
+
+### Address Translation
+* Total number of pages does not need to be the same as the total number of frames
+	* Total # pages determines the logical memory size of a process
+	* Total # frames depending on the size of physical memory
+
+* OS maintains a `frame table` for managing physical memory
+	* One entry for each physical frame
+	* Indicate whether a frame is free or allocated
+	* If allocated, to which page of which process or processes
+* Free frame list maintained by OS
+
+* Page/Frame Size
+	* The page(frame) size is defined by hardware
+		* Typically a power of 2
+		* Ranging from 512 bytes to 6MB/page
+		* 4kB/8Kb page is commonly used
+
+	* Internal fragmentation?
+		* Large page size -> More space waste
+	* But `page size have grown over time`
+		* memory, process, data sets have become larger
+		* better I/O performance(during page fault)
+		* `page table is smaller`
+
+### Implementation of Page Table
+* Page table is kept `in memory`
+* `Page-table base register(PTBR)
+	* The `physical memory address` of the page table
+	* The PTBR value is stored in PCB(Process Control Block)
+ 	* Changing the value of PTBR during Context-switch
+
+* With PTBR, each memory reference result in `2 memory reads`
+	* One for the page table and one for the real address
+* The 2-access problem can be solved by
+	* `Translation Look-aside Buffer(TLB)` (HW) which is implemented by `Associative memory`(HW)
+
+* Associative Memory
+	* All memory entries can be accessed at the same time
+		* Each entry corresponds to an associative register
+	* But number of entries are limited
+		* Typical number of entries: 64~1024
+	* Associative memory - parallel search
+		* Address translation (A', A'')
+			* If A' is in associative register, hey frame # out. (lookup time O(1))
+			* Otherwise get frame # from page table in memory
+
+* Translation Look-aside Buffer(TLB)
+	* `A cache for page table shared by all processes`
+	* TLB must be flushed after a context switch
+		* Otherwise, TLB entry must has a PID field(address-space identifiers(ASIDs))
+
+* Effective Memory-Access Time
+	* 20ns for TLB search
+	* 100ns for memory access
+	* Effective Memory-Access Time(EMAT)
+		* 70% TLB hit-ratio: EMAT = 0.7 * (20 + 100) + (1-0.7) * (20 + 100 + 100) = 150ns
+		* 98% TLB hit-ratio: EMAT = 0.98 * (20 + 100) + (1-0.98) * (20 + 100 + 100) = 122ns
+
+### Memory Protection
+* Each page is associated with a set of protection bit in the page table
+	* a bit to define read/write/execution permission
+* Common use: valid-invalid bit
+	* Valid: the page/frame is in the process' logical space, and is thus a legal page
+	* Invalid: the page/frame is not in the process' logical address space
+* Potential Issues:
+	Unused page entry cause memory waste -> use page table length register(PTLR)
+	* Process memory may NOT be on the boundary of a page -> memory limit register is still needed
+
+### Shared Pages
+* Paging allows processes share common code, which must be reentrant
+* Reentrant code(pure code)
+	* It never change during execution
+	* text editors, compilers, web servers, etc
+* Only one copy of the shared code needs to be kept in physical memory
+* Two(several) virtual addresses are mapped to one physical address
+* Process keeps a copy of its own private data and code
+
+* Shared Pages by Page Table
+	* Shared code must appear in the same location in the logical address space of all processes
+
+### Page Table Memory Structure
+* Page table could be huge and difficult to be loaded
+	* `Need to break it into several smaller page tables, better within a single page size(i.e. 4KB)`
+	* `Or reduce the total size of page table`
+* Solutions
+	* Hierarchical Paging
+	* Hash Page Tables
+	* Inverted Page Table
+
 # References
 * [Operating System Course by Jerry Chou](https://www.youtube.com/playlist?list=PLS0SUwlYe8czigQPzgJTH2rJtwm0LXvDX)
