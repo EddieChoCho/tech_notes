@@ -57,5 +57,61 @@
 	* Stub call -> check if the referred lib is in memory -> in not, load the lib -> execute the lib
 	* e.g. DDL(Dynamic link library) on Windows
 
+## `Swapping`
+* How to move a program between mem. & disk: swap
+* Swapping: A process can be swapped out of memory to `backing store`, and later brought back into memory for contiguous execution
+	* Also used by `midterm scheduling`, different from context switch
+* `Backing store` - a chunk of disk, separated from file system, to provide direct access to these memory images
+* Why swap a process
+	* Free up memory
+	* Roll out, roll in: swap lower priority process with a higher one
+
+* Swap back memory location
+	* If binding is done at compile/load time: swap back memory address must be the same
+	* If binding is done at execution time: swap back memory address can be different
+
+* A process to be swapped == `must be idle`
+	* Solutions for preventing from swapping the process that is waiting for I/O:
+ 		* Never swap a process with pending I/O
+ 		* Or I/O operations are done through OS buffers(i.e. a memory space not belongs to any user processes)
+
+* Process Swapping to Backing Store
+	* Major part of swap time is transfer time; `total transfer time is directly proportional to the amount of memory swapped`
+
+## Contiguous Memory Allocation
+
+### Memory Allocation
+* Fixed-partition allocation
+	* Each process loads into one partition of fixed-size
+	* `Degree of muli-programming` is bounded by the number of partitions
+
+* Variable-size partition
+	* Hole: block of contiguous free memory
+	* Holes of various size are scattered in memory
+
+* Multiple Partition(Variable-Size) Method
+	* When a process arrives, it is allocated a hole large enough to accommodate it
+	* The OS maintains info. on each `in-use` and `free-hole`
+	* A free hole can be merged with another hole to form a larger hole
+
+* Dynamic Storage Allocation Problem
+	* How to satisfy a request of size n from a list of free holes
+	* `First-fit` - allocate the 1st hole that fits
+	* `Best-fit` - allocate the smallest hole that fits: Must search through the whole list
+	* `Worst-fit` - allocate the largest hole: Must also search through the whole list
+	* First-fit and best-fit better than worst-fit in terms of speed and storage utilization
+
+### Fragmentation
+* External fragmentation
+	* Total free memory space is big enough to satisfy a request, but is not contiguous
+	* `Occur in variable-size allocation`
+* Internal fragmentation
+	* Memory that is internal to a partition but is not being used
+	* `Occur in fixed-partition allocation`
+
+* Solution: `compactiion`
+	* Shuffle the memory contents to place all free memory together in one large block `at execution time`
+	* Only if binding is done at execution time
+
 # References
 * [Operating System Course by Jerry Chou](https://www.youtube.com/playlist?list=PLS0SUwlYe8czigQPzgJTH2rJtwm0LXvDX)
