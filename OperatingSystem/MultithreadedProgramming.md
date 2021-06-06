@@ -1,0 +1,128 @@
+# Multithreaded Programming
+ 
+## Thread Introduction
+* Threads
+	* A.k.a lightweight process: basic unit of CPU utilization
+	* All threads belonging to the same process share: code section, data section, and OS resources(e.g. open files)
+	* But each thread has it own(thread control block): thread ID, program counter, register set, and a stack
+
+* Multithcore Programming
+	* Multithreaded programming provides a mechanism for `more-efficient use of multiple cores` and `improved concurrency`(threads can run in parallel)
+	* Multicore system putting pressure on `system designers` and `application programmers`
+		* OS designer: scheduling algorithms use cores to allow the parallel execution
+
+* Challenges in Multicore Programming
+	* Dividing activities: divide program into concurrent task
+	* Data splitting: divide data accessed and manipulated by the tasks
+	* Data dependency: sync data access
+	* Balance: evenly distribute task to cores
+	* Testing and debugging
+
+* User v.s. Kernel Threads
+	* User threads - thread management done by user-level `threads library`(e.g. Java threads)
+		* `Thread library` provides support for thread creation, scheduling, and deletion
+		* Generally `fast` to create and manage
+		* `If the kernel is single-threaded, a user-thread blocks -> entire process blocks` event if other threads are ready to run 
+	* Kernel threads - supported by the `kernel(OS)` directly
+		* The kernel performs thread creation, scheduling, etc.
+		* Generally `slower` to create and manage
+		* If a thread is blocked, the kernel can schedule another thread for execution
+
+## Multithreading Models
+* Many-to-One: Many user-level threads mapped to single kernel thread
+	* Pros
+		* Used in systems that do not support kernel threads
+		* `Thread management is done in user space, so it is efficient`
+	* Cons
+		* The entire process will block if a thread makes a blocking system call
+		* Only one thread can access the kernel at a time, `multiple threads are unable to run in parallel on multiprocessors`
+
+* One-to-One: Each user-level thread maps to a kernel thread
+	* There could be a `limit on number of kernel threads`
+	* Pros: More concurrency
+	* Cons: Overhead: Creating a thread requires creating the corresponding kernel thread
+	* Example: Linux
+
+* Many-to-Many: `Multiplexes` many user-level threads to a smaller or equal number of kernel threads
+	* `Allows the developer to create as many user thread as wished`
+	* Pros: 
+		* The corresponding kernel threads can run in parallel on a multiprocessor
+		* `When a thread performs a blocking call, the kernel can schedule another thread for execution`
+
+## Threaded Case Study
+* Shared-memory programming
+	* Issues
+		* Synchronization
+		* Deadlock
+		* Cache coherence
+
+	* Programming techniques
+		* Parallelizing compiler
+		* Unix processes
+		* Threads(Pthread, java)
+
+### Pthread
+* Historically, HW vendors have implemented their own proprietary versions of threads
+* POSIX(Potable Operating System Interface) standard is `specified for portability across Unix-like system
+	* Similar concept as MPI for message passing libraries
+
+* Pthread is the `implementation` of `POSIX standard` for thread.
+* create, join, detach
+
+### Java Thread
+* Thread is created by extending Thread class or implementing the Runnable interface
+* Java threads are implemented using a `thread library on the host system`
+	* Win32 threads on Windows
+	* Pthreads on UNIX-like system
+* Thread mapping depends on implementation of the JVM
+	* Windows 98/NT: one-on-one model
+	* Solaris 2: many-to-many model
+
+### Linux Threads
+* Linux does not support multithreading
+* Various Pthreads implementation are available for user-level
+* The `fork` system call - create a new process and a copy of the associated data of the parent process
+* The `clone` system call - create a new process and a link that points to the associated data of the parent process
+
+## Threading Issues
+
+### Semantics of fork() and exec()
+* Does `fork()` duplicate only the calling thread or all threads?
+	* Some UNIX system support two versions for `fork()`
+* `execlp()` works the same; `replace the entire process`
+	* If exec() is called immediately after forking, then duplicating all threads is unnecessary
+
+### Thread Cancellation
+* What happen if a thread determinates before it has complete(e.g. terminate web page loading)
+* Target thread: a thread that is to be cancelled
+* Two general approaches
+	* `Asynchronous cancellation`
+		* One thread terminates the target thread immediately
+	* `Deferred cancellation(default option)`
+		* The target thread periodically checks whether it should be terminated, allowing it an opportunity to terminate itself in an orderly fashion(canceled safely)
+		* `Check at Cancellation points`
+### Signal Handling
+* Signals(`synchronous` or `async`) are used in UNIX systems to notify a process that an event has occurred
+	* Sync: illegal memory access
+	* Async: <control-C>
+
+* A `signal handler` is used to process signals
+	1. Signal is generated by particular event
+	2. Signal is delivered to a process
+	3. Signal is handled
+
+* Options
+	* Deliver the signal to the thread to which the signal applies
+	* Deliver the signal to every thread in the process
+	* Deliver the signal to certain threads in the process
+	* Assign a specific thread to receive all signals for the process
+
+### Thread Pools
+* Create a number of threads in a pool where they await work
+* Adventages
+	* Usually slightly `faster to service a request` with an existing thread `than create a new thread`
+	* Allows the number of threads in the application(s) to be `bound to the size of the pool`
+* `# of threads:` # of CPUs, expected # of requests, amount of physical memory
+
+# References
+* [Operating System Course by Jerry Chou](https://www.youtube.com/watch?v=iEipIUjbQxk&list=PLS0SUwlYe8czigQPzgJTH2rJtwm0LXvDX&index=42)
