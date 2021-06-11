@@ -235,5 +235,64 @@
 	* Hash Page Tables
 	* Inverted Page Table
 
+## Non-Contiguous Memory Allocation - Segmentation
+### Segmentation
+* Memory-management that supports user view of memory
+* A program is a collection of segments. A segment is a logical unit such as:
+	* main program
+	* function, object
+	* local/global variables
+	* stack, symbol table,
+	* arrays, etc...
+
+### Segmentation Table
+* Logical address: (seg#, offset)
+	* Offset has the SAME length as physical address
+* Segmentation Table - maps two-dimensional physical addresses; each table entry has:
+	* `Base(4 bytes)`: the start physical address
+	* `Limit(4 bytes)`: the length of the segment. (To check if the offset is valid or not)
+* Segment-table base register (STBR)
+	* the physical address of the segmentation table
+* Segment-table length register (STLR)
+	* the number of segments
+
+### Segmentation Hardware
+* Limit register is used to check offset length
+* MMU allocate memory by assigning an appropriate `base address for each segment`
+	* physical address cannot overlap between segments
+
+### Address Translation Comparison
+* Segment
+	* Table entry: (segment base address, limit)
+	* Segment base address can be 
+	* The length of "offset" is the same as the physical memory size
+
+* Page
+	* Table entry: (frame base address)
+	* Frame base address = frame number * page size
+	* The length of "offset" is the same as page size
+
+### Protection & Sharing
+* Protection bits associated with segments
+	* Read-only segment(code)
+	* Read-write segment(data, heap stack)
+* Code sharing occurs at `segment level`
+	* `Shared memory communication`
+	* `Shared library`
+* Share segment by having same base in two segment tables
+
+## Segmentation with Paging
+* Basic Concept
+	* Apply `segmentation` in `logical` address space
+	* Apply `paging` in `physical` address space
+	* Paging after segmentation
+
+### Address Translation
+* CPU generates logical address
+	* Given to `segmentation unit` -> produces `linear addresses`
+	* Linear address given to `paging unit` -> generates `physical address` in main memory
+* Segmentation and paging units form equivalent of MMU
+[CPU] -logical address-> [segmentation unit] - linear address-> [paging unit] -physical address->[physical memory]
+
 # References
 * [Operating System Course by Jerry Chou](https://www.youtube.com/playlist?list=PLS0SUwlYe8czigQPzgJTH2rJtwm0LXvDX)
