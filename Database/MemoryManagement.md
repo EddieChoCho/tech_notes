@@ -59,15 +59,17 @@
      * Each scan needs certain blocks a time
      * In particular, a table scan need one block a time and can forget what just read
 
-* To reduce I/Os, the buffer manager allocates a pool of pages, called `buffer pool`
-  * Caching multiple blocks
-  * Implement swapping
-* Pages should be the direct I/O buffers held by the OS
-  * Advoids swapping by VM
-  * Eliminates the redundancy of double buffering
-  * e.g. ByteBuffer.allocateDirect()
+* Buffer manager
+    * To reduce I/Os, the buffer manager allocates a pool of pages, called `buffer pool`
+        * Caching multiple blocks
+        * Implement swapping
+    * Pages should be the direct I/O buffers held by the OS
+        * Avoids swapping by VM
+        * Eliminates the redundancy of double buffering
+        * e.g. ByteBuffer.allocateDirect()
 
-### How to make use of predictable block accesses to further reduce I/Os?
+### How to make use of predictable block accesses to further reduce I/Os? 
+#### Pinning Blocks 
 * Each table scan needs one block a time
   * The semantic of blocks is hidden behind the associated RecordFile
 * It is the RecordFile instances that talk to the memory manager about which blocks are needed. One instance per thread/client
@@ -78,6 +80,7 @@
      3. When the client is done with the block, it tells the buffer manager to `unpin` the block
   * When swapping, only pages containing the `unpinned` blocks can be swapped out
 
+#### Pinning Pages
 * Result of pinning
   * A hit, no I/O
   * Swapping: there exists at least one `candidate page` in the buffer pool holding unpinned block
@@ -85,6 +88,66 @@
      * Which candidate page? `replacement strategies`
      * Then read in the desired block
   * Waiting: If all pages in the buffer pool are pinned. Wait until some other unpins a page
+
+#### Buffers
+* Each page in the buffer pool needs to associate with additional information:
+	* Is contained block pinned?
+	* Is contained block modified(dirty)?
+	* Information required by the replacement strategy
+* A `buffer` wraps a page and hold this information
+* A block can be pinned and accessed by multiple clients
+	* Buffer must be thread safe(same as page)
+	* DBMS needs other mechanism(i.e. concurrency control) to serialize conflict operations to a buffer
+	* Thread safe + Concurrency Control(Control the order) = Guarantee the `I`(isolation) of ACID
+
+#### Buffer Replacement Strategies
+* All buffers in the buffer pool begin unallocated
+* Once all buffers are loaded, buffer manager has to replace the unpinned block in same `candidate buffer` to serve new pin request
+* Best candidate?
+	* The buffer containing block that will be unused for the longest time
+	* Maximize the hit rate of pins
+	* However, as in VM, access of blocks in unpinned buffers is not determinable
+	* Heuristics needed:
+		* Naive
+		* FIFO
+		* LRU
+		* Clock
+	* Some commercial systems use different heuristics for different `buffer type`
+		* e.g. catalog buffers, index buffers, buffers for full table scan, etc.
+
+* The Naive Strategy
+	* Travers the buffer pool sequentially from beginning
+	* Replaces the first unpinned buffer met
+	* Problem: buffers are not evenly utilized
+	* Low hit rate: Some buffers may contain stale data
+
+* The FIFO Strategy
+	* Choose the buffer that contains the least-recently-read-in block
+		* Each buffer records the `time a block is read in`
+	* Unpinned buffers can be maintained in a priority queue
+		* Finds the target unpinned buffer in O(1) time
+	* Assumption: the older blocks are less likely to be used in the future
+		* Valid? Not true, for, e.g., catalog blocks
+
+* The LRU Strategy
+	* Chooses the buffer that contains the least recently used block
+		* Each buffer records the `time the block us unpinned`
+	* Assumption: blocks that are not used in the near past will unlikely be used in the near future
+		* Valid generally
+		* Avoids replacing commonly used pages
+	* But still not optimal for full table scan
+	* Most commercial systems use simple enhancements to LRU
+
+	* LRU Variants
+		* In Oracle DBMS, the LRU queue has two logical regions
+			* Cold region in the front of the hot region
+		* `Cold:LRU`; `hot: FIFO`
+		* For full table scan: Puts the just read page into the head(at LRU end)
+
+* The Clock Strategy
+	* Similar to Naive strategy, but always start traversal from the previous replacement position
+	* Uses the unpinned buffers as evenly as possible(with LRU flavor)
+	* Easy to implement
 
 # References
 * [Introduction to Database System by Shan-Hung Wu](https://www.youtube.com/playlist?list=PLS0SUwlYe8cyln89Srqmmlw42CiCBT6Zn)
