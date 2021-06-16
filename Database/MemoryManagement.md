@@ -149,5 +149,42 @@
 	* Uses the unpinned buffers as evenly as possible(with LRU flavor)
 	* Easy to implement
 
+### How many pages are in the buffer pool?
+#### Pool Size
+* The set of all blocks that are currently accessed by clients is called the `working set`
+* Ideally, the buffer pool should be larger than the working set
+	* Otherwise, `deadlock` may happen
+
+#### Deadlock
+* What if there is no candidate buffer when pinning?
+	* Buffer manager tells the client to wait
+	* Notifies(wakes up) the client to pin again when some other unpins a block
+* Deadlock
+	* Clients A and B both want to use two buffers and there remain only two candidate buffers
+	* If they both have got one buffer and attempt to get another one, deadlock happens
+	* Circularly waiting the others to unpin
+
+* How to detect deadlock?
+	* No buffer becomes available for an exceptionally long time
+	* e.g., nuch longer than executing a query
+
+* How to deal with deadlock?
+	* Forces at least one client to
+		1. First unpin all blocks it holds
+		2. Then re-pins these blocks one-by-one
+
+	* waite for MAX_TIME
+
+* How about Self-Deadlock?
+	* A client that pins more blocks than a pool can hold
+	* Happens when
+		* The pool is too small
+		* The client is malicious(luckily, we write the client/RecordFile ourselves)
+	* How to handle this?
+		* A(fixed-sized) buffer manager has no choice but throwing an exception
+	* The pool should be large enough to at least hold the working set of a single client
+	* A good client should pin blocks sparingly
+		* Unpins a block immediately when done
+
 # References
 * [Introduction to Database System by Shan-Hung Wu](https://www.youtube.com/playlist?list=PLS0SUwlYe8cyln89Srqmmlw42CiCBT6Zn)
