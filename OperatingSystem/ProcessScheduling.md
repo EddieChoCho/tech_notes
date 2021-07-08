@@ -46,6 +46,84 @@
 	* Interrupt re-enabling time
 	* Context switch time
 
+## Scheduling Algorithms
+* Scheduling Criteria
+	* `CUP utilization`
+		* theoretically: 0%~100%
+		* real system: 40%(light)~90%(heavy)
+	* `Throughput`
+		* number of completed `processes` per time unit
+	* `Turnarund time`
+		* submission ~ completion
+	* `Waiting time`
+		* total waiting time int the `ready queue`
+	* `Response time`
+		* submission ~ the `first response` is produced
+
+
+### Algorithms
+
+#### First-Come, First-Served(FCFS) scheduling
+* Convoy effect: short processes behind a long process
+
+#### Shortest-Job-First(SJF) scheduling
+* Associate with each process the length of its next CPU burst
+* `A process with shortest burst length gets the CPU first`
+* `SJF provides the minimum average waiting time(optimal!)`
+* Two schemes
+	* Non-preemptive - once CPU given to a process, it cannot be preempted until its completion
+	* Preemptive - if a new process arrives with shorter burst length, preemption happens
+	* Wait time = completion time - arrival time - run time(burst time)
+
+* Approximate Shortest-Job-First(SJF)
+	* SJF difficulty: `no way to know length of the next CPU burst`
+	* `Approximate SJF`: the next burst can be `predicated` as an `exponential average` of the measured length of previous CPU bursts
+
+#### Priority scheduling
+* A priority number is associated with each process
+* `The CPU is allocated to the highest priority process`
+	* Preemptive
+	* Non-preemptive
+* SJF is a priority scheduling where priority is the predicted next CPU burst time
+* Problem: starvation(low priority processes never execute)
+	* e.g. IBM 7094 shutdown at 1973, and 1967-process never run
+* `Solution: aging`(as time progresses increase the priority of processes)
+	* e.g. increase priority by 1 every 15 minutes
+
+#### Round-Robin scheduling
+* Each process gets a small unit of CPU time(time quantum), usually 10 ~ 100 ms
+* After TQ(Time Quantum) elapsed, process is `preempted` and added `to the end of the ready queue`
+* Performance
+	* TQ large -> `FIFO`
+	* TQ small -> (context switch) `overhead` increases
+* Typically, higher average turnaround than SJF, but better response
+
+#### Multilevel queue scheduling
+* Ready queue is partitioned into `separate queues`
+* Each queue has its own scheduling algorithm
+* `Scheduling must be done between queues`
+	* Fixed priority scheduling: possibility of starvation
+	* Time slice - each queue gets a certain amount of CPU(e.g. 80%, 20%)
+
+#### Multilevel feedback queue scheduling
+* A process can `move between the various queue`; `aging` can be implemented
+* Idea: separate processes according to the characteristic of their CPU burst
+	* I/O-bound and interactive processes in higher priority queue -> short CPU burst
+	* CPU-bound processes in lower priority queue -> long CPU burst
+
+* In general, multilevel feedback queue scheduler is defined by the following parameters:
+	* Number of queues
+	* Scheduling algorithm for each queue
+	* Method used to determine when to upgrade a process
+	* Method used to determine when to demote a process
+
+### Evaluation Methods
+* Deterministic modeling - takes a particular predetermined workload and defines the performance of each algorithm for that workload
+	* Cannot be generalized
+
+* Queueing model - mathematical analysis
+* Simulation
+* Implementation
 
 # References
 * [Operating System Course by Jerry Chou](https://www.youtube.com/watch?v=EpZgvKBf5eo&list=PLS0SUwlYe8czigQPzgJTH2rJtwm0LXvDX&index=47)
