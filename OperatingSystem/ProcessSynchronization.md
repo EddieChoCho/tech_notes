@@ -42,5 +42,51 @@
 	* On a single-processor machine, we could `disable interrupt` or use `non-preemptive CPU scheduling`
 * Commonly described as `critical section problem`
 
+## `Critical Section`
+
+### The Critical-Section Problem
+* Purpose: `a protocol` for processes to cooperate
+* Problem description:
+    * `N processes` are competing to use some `shared data`.
+    * Each process has a `code segment`, called `critical section`, in which the shared data is accessed.
+    * Ensure that when one process is executing in its critical section, `no other process is allowed to execute in its critical section` -> mutually exclusive.
+
+### Critical Section Requirements
+1. `Mutual Exclusion`: if process P is executing in its CS. no other processes can be executed in their CS.
+2. `Progress`: `if no process is executing in its CS` and there exist some processes that wish to enter their CS, these `processes cannot be postponed indefinitely`
+3. `Bounded Waiting`: `A bound must exist` on the number of times that `other processes are allowed to enter their CS` after a process has made a request to enter its CS
+
+* `How to design the entry and exit section to satisfy the above requirement?`
+
+### Critical Section Solutions & Synchronization Tools
+
+#### Software Solution
+* Peterson's Solution for Two Processes
+* Bakery Algorithm(n processes)
+    * Before enter its CS, each `process receives a #`
+    * Holder of the `smallest # enters CS`
+    * The numbering scheme always generates `# in non-decreasing order`; i.e., 1,2,3,3,4,5,5,5
+    * If processes Pi amd Pj receive the `same #, if i < j, then Pi is served first`
+    * Notation: (a, b) < (c, d) if a < c or if a == c && b < d
+* Pthread Lock/Mutex Routines
+* Condition Variables(CV)
+	* CV represent some `condition` that a thread can:
+		* Wait on, until the condition occurs; or
+		* Notify other waiting threads that the condition has occurred.
+	* Three operations on condition variables:
+		* `wait()` --- `Block` until another thread calls signal() or broadcast() on the CV.
+		* `signal()` --- Wake up `one thread` waiting on the CV
+		* `broadcast()` -- Wake up `all threads` waiting on the CV
+	* In Pthread, CV `type` is a `pthread_cond_t`
+    * ThreadPool Implementation
+
+#### Synchronization Hardware Support
+* The CS problem occurs because the modification of a shared variable may be `interrupted`
+* `If disable interrupts when in CS...`
+	* not feasible in multiprocessor machine
+	* clock interrupts cannot fire in any machine
+* HW support solution: `atomic instructions`
+	* atomic: `as one uninterruptible unit`
+
 # References
 * [Operating System Course by Jerry Chou](https://www.youtube.com/watch?v=CNO_I8jhX3I&list=PLS0SUwlYe8czigQPzgJTH2rJtwm0LXvDX&index=52)
