@@ -87,6 +87,98 @@
 	* clock interrupts cannot fire in any machine
 * HW support solution: `atomic instructions`
 	* atomic: `as one uninterruptible unit`
+	
+## `Semaphores`
+* A `tool` to generalize the synchronization problem(`easier to solve, but no guarantee for correctness`)
+* More specifically...
+	* `a record` of `how many units` of a particular resource are available
+		* if #record = 1 -> `binary semaphore, mutex lock`
+		* if #record > 1 -> `counting semaphore`
+	* accessed only through 2 `atomic` ops: `wait` & `signal`
+
+* `Spinlock` implementation:
+	* Semaphore is an `integer variable`
+		```
+		wait(S){
+			while(S <= 0);
+			S--;
+		}
+		```
+		```
+		signal(S){
+			S++;
+		}
+		```
+### POSIX Semaphore
+* Semaphore is part of `POSIX standard` BUT it is `not belonged to Pthread`
+	* `It can be used with or without thread`
+* POSIX Semaphore routines:
+	```
+	* sem_init(sem_t*sem, int pshared, unsigned int value)
+	* sem_wait(sem_t*sem)
+	* sem_post(sem_t*sem)
+	* sem_getvalue(sem_t*sem, int*valptr)
+	* sem_destory(sem_t*sem)
+	```
+* n-Process Critical Section Problem
+	* shared data: 
+		`semaphore mutex` //initially mutex = `1`
+	* Process Pi:
+		```
+		do {
+			wait(mutex); //pthread_mutex_lock(&mutex)
+				critical section
+			signal(mutex); //pthread_mutex_unlock(&mutex)
+				remainder section
+		} while(1);
+		```
+	* `Progress? Yes`
+	* `Bounded waiting? Depends on the implementation of wait()`
+
+### Non-busy waiting Implementation
+* Semaphore is `data struct with a queue`
+	* may use any queuing strategy(FIFO, FILO, etc)
+		```
+		typedef struct{
+			int value;//`init to 0`
+			struct process * L;
+			//`"PCB" queue`
+		} semaphore;
+		```
+* wait() and signal()
+	* use system calls: `block() and wakeup()`
+	* must be executed `atomically`
+		```
+		void wait(semaphore S){
+			S.value--;//`subtract first`
+			if(S.value < 0){
+				add this process to S.L;
+				`sleep`();
+			}
+		}
+		```
+		```
+		void signal(semaphore S){
+			S.value++;
+			if(S.value <= 0){
+				remove a process P from S.L;
+				`wakeup`(P);
+			}
+		}
+		```
+
+### Cooperation Synchronization
+* P1 executes S1; P2 executes S2
+	* S2 be executed only after S1 has completed
+* Implementation
+	* shared var:
+		* semaphore `sync`; //initially sync =0
+
+	P1:				    P2:
+	--			        --
+	S1;			        wait(`sync`)
+	signal(`sync`);     S2;
+
 
 # References
 * [Operating System Course by Jerry Chou](https://www.youtube.com/watch?v=CNO_I8jhX3I&list=PLS0SUwlYe8czigQPzgJTH2rJtwm0LXvDX&index=52)
