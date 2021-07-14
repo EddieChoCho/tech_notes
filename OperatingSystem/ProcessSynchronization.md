@@ -179,6 +179,45 @@
 	S1;			        wait(`sync`)
 	signal(`sync`);     S2;
 
+## Classical Synchronization Problems
+* Purpose: `used for testing newly proposed synchronization scheme`
+
+### Bounded-Buffer Problem
+* A pool of n buffers, each capable of holding one item
+* Producer
+	* grab an empty buffer
+	* place an item into the buffer
+	* waits if no empty buffer is available
+* Consumer
+	* grab a buffer and retracts the item
+	* place the buffer back to the free pool
+	* waits if all buffers are empty
+
+### [Reader-Writers Problem](https://en.wikipedia.org/wiki/Readers%E2%80%93writers_problem)
+* A set of shared data objects
+* A group of processes
+	* reader processes(read shared objects)
+	* writer processes(update shared objects)
+	* `a writer process has exclusive access to a shared object`
+
+* Different variations involving priority
+	* `first RW problem`: no reader will be kept waiting unless a writer is updating a shared object(readers-preference)
+	* `second RW problem`: once a writer is ready, it performs the updates as soon as the shared object is released(writers-preference)
+		* writer has higher priority than reader
+		* once a writer is ready, no new reader may start reading
+	* `third RW problem`: no thread shall be allowed to starve(fairness)
+
+### Dining-Philosophers Problem
+* `5 persons` sitting on 5 chairs with `5 chopsticks`
+* A person is either thinking or eating
+	* thinking: no interaction with the rest 4 persons
+	* eating: `need 2 chopsticks` at hand
+	* a person `picks up 1 chopstick at a time`
+	* done eating: `put down both chopsticks`
+
+* deadlock problem
+	* one chopstick as one semaphore
+* starvation problem
 
 # References
 * [Operating System Course by Jerry Chou](https://www.youtube.com/watch?v=CNO_I8jhX3I&list=PLS0SUwlYe8czigQPzgJTH2rJtwm0LXvDX&index=52)
