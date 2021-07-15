@@ -219,5 +219,60 @@
 	* one chopstick as one semaphore
 * starvation problem
 
+## Monitor
+
+### Motivation
+* Although semaphores provide a convenient add effective synchronization mechanism, its correctness is depending on the programmer
+	* `All processes access a shared data object must execute wait() and signal() in the right order and right place`
+	* This may not be true because honest programming error or uncooperative programmer
+
+### Monitor -- `A high level language construct`
+* High-level synchronization construct that allows the safe sharing of an abstract data type among concurrent processes
+* The representation of a `monitor type` consists of
+	* declarations of `variables` whose values define the state of an instance of the type	
+	* `Procedures/functions` that implement operations on the type
+* The monitor type is similar to a `class in OO language`
+	* A procedure within a monitor can access only `local variables` and the formal `parameters`
+	* The local variables of a monitor can be used only by the local procedures
+* But, the monitor ensures that `only one process at a time can be active within the monitor`
+* Similar idea is incorporated to many prog. language:
+	* concurrent pascal, C#, and Java
+
+### Monitor Condition Variables
+* To allow a process to `wait within` the monitor, a `condition variable` must be declared, as `condition x, y;`
+* Condition variable can only be used with the operations `wait()` and `signal()`
+	* x.wait();
+		* `means that the process invoking this operation is suspended until another process invokes`
+			* Enqueue the process to the waiting queue
+	* x.signal();
+		* resumes exactly one suspended process. 
+			* Dequeue the process from the waiting queue
+		* If no process is suspended, then the signal operation `has no effect`.
+		* `(In contrast, signal always change the state of a semaphore)`
+
+### Use Monitor to Solve Dining-Philosophers Problem
+
+### Synchronized Tools in Java
+* Synchronized Methods(Monitor)
+	* Synchronized method uses the method receiver as a lock
+	* Two invocations of synchronized `methods cannot interleave on the same object`
+	* When one thread is executing a synchronized method for an object, all other threads that invoke synchronized methods for the same object block until the first thread exist the object.
+	```
+	public synchronized void increment(){c++;} 
+	```
+
+* Synchronized Statement(Mutex Lock)
+	* Synchronized blocks uses the `expression` as a lock
+	* A synchronized statement can only be executed once the thread has obtained a `lock for the object or the class that has been referred to in the statement`
+	* useful for improving concurrency `with fine-grained`
+	```
+	public void run(){
+		synchronized(p1){
+			int i = 10; // statement without locking requirement
+			p1.display(s1);
+		}
+	}
+	```
+
 # References
 * [Operating System Course by Jerry Chou](https://www.youtube.com/watch?v=CNO_I8jhX3I&list=PLS0SUwlYe8czigQPzgJTH2rJtwm0LXvDX&index=52)
