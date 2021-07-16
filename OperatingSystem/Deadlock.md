@@ -41,5 +41,34 @@
 * Ignore the problem and pretend that deadlocks never occur in the system
 	* used by most operating systems, including UNIX.
 
+### Deadlock Prevention
+* `Mutual exclusion(ME)`: do not require ME on sharable resources
+	* e.g. there is no need to ensure ME on read-only files
+	* `Some resources are not shareable, however`(e.g. printer)
+
+* `Hold & Wait`:
+	* When a process requests a resource, it does not hold any resource
+	* Pre-allocate all resources before executing
+	* `Cons: resource utilization is low; starvation is possible`
+
+### Deadlock Prevention(con't)
+* `No preemption`
+	* When a process is waiting on a resource, all its holding resources are preempted
+		* e.g. P1 requests R1 which is allocated to P2, which in turn is waiting on R2. (P1 -> R1 -> P2 -> R2)
+		* `R1 can be preempted and reallocated to P1`
+	* Applied to resource whose states can be easily saved and restored later
+		* e.g. CPU register & memory
+	* `It cannot easily be applied to other resources.`
+		* `e.g. printer & tape derives` 
+
+* `Circular wait`
+	* impose a total ordering of all resources types
+	* a process requests resources in an increasing order 
+		* Let R = {R0, R1, ..., Rn} be the set of resource types
+		* `When request Rk, should release all Ri, i >= k`
+	* Example:
+		* F(tape drive) = 1, F(disk drive) = 5, F(printer) = 12
+		* A process must request tape and disk drive before printer
+
 # References
 * [Operating System Course by Jerry Chou](https://www.youtube.com/watch?v=efH4nuwUalA&list=PLS0SUwlYe8czigQPzgJTH2rJtwm0LXvDX&index=62)
