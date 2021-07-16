@@ -274,5 +274,37 @@
 	}
 	```
 
+## Atomic Transaction
+
+### System Model
+* Transaction: `a collection of instructions`(or instructions) that performs a `single logic function`
+* Atomic Transaction: operations happen as a single logical unit of work, `in its entirely, or not at all`
+* Atomic Transaction is particular a concern for `database system`
+	* Strong interest to use DB techniques in OS
+
+### File I/O Example
+* Transaction is a series of `read` and `write` operations
+* Terminated by `commit`(successful) or `abort`(failed) operation
+* Aborted transaction must be `rolled back` to undo any changes it performed
+	* It is part of the responsibility of the system to ensure this property
+
+### Rollbck
+* `Record` to stable storage information about all `modifications by a transaction`
+	* `Stable storage`: never lost its stored data
+* `Write-ahead logging:
+	* https://en.wikipedia.org/wiki/Write-ahead_logging
+	* https://martinfowler.com/articles/patterns-of-distributed-systems/wal.html
+* Log is used to `reconstruct the state of data(?)` which modified by the transactions
+	* Use `undo(Ti), redo(Ti)` to recover data
+
+### Checkpoints
+* WHen failure occurs, must consult the log to `determine which transactions must be re-done`
+	* Searching process is time consuming
+	* Redone may not be necessary for all transactions
+* Use checkpoints to reduce the above overhead:
+	* Output all `log records` to stable storage
+	* Output all `modified data` to stable storage
+	* Output a log record `<checkpoint>` to stable storage
+
 # References
 * [Operating System Course by Jerry Chou](https://www.youtube.com/watch?v=CNO_I8jhX3I&list=PLS0SUwlYe8czigQPzgJTH2rJtwm0LXvDX&index=52)
