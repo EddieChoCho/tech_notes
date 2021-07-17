@@ -70,5 +70,43 @@
 		* F(tape drive) = 1, F(disk drive) = 5, F(printer) = 12
 		* A process must request tape and disk drive before printer
 
+## Deadlock Avoidance
+* `safe state`: a system is in a safe state if there exists `a sequence of allocations` to satisfy requests by all process
+	* THe sequence of allocations is called `safe sequence`
+* safe state -> no deadlock
+* unsafe state -> `possibility` of deadlock
+* deadlock avoidance -> `ensure that a system never enters an` unsafe state
+* check the worst case
+
+#### Safe state with safe sequence
+#### Un-Safe state w/o safe sequence
+
+### Avoidance Algorithms
+* `Single instance` of a resource type
+	* `resource-allocation graph(RAG) algorithm` based on circle detection
+
+#### Resource-Allocation Graph(RAG) Algorithm
+* `Request edge`
+* `Assignment edge`
+* `Claim edge`
+	* `Claim edge` converts to `request edge`: When a `resource is requested` by a process
+	* `Assignment edge` converts back to a `claim edge`: When a `resource is released` by a process
+
+* Resources `must be claimed a priori` in the system
+* `Grant a request` only if `No cycle created`
+* Check for safety using a `cycle-detection algorithm`
+
+
+#### Banker's Algorithm
+* Use for `multiple instances` of each resource type
+* Based on safe sequence detection
+* Use a general safety algorithm to `pre-determine` if any `safe sequence` exists after allocation
+* Only proceed the allocation if safe sequence exists
+* Safety algorithm
+	1. Assume processes need `maximum` resources
+	2. Find a process that can be satisfied by free resources
+	3. Free the resource usage of the process
+	4. Repeat to step 2 until all processes are satisfied
+
 # References
 * [Operating System Course by Jerry Chou](https://www.youtube.com/watch?v=efH4nuwUalA&list=PLS0SUwlYe8czigQPzgJTH2rJtwm0LXvDX&index=62)
