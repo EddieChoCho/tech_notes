@@ -108,5 +108,24 @@
 	3. Free the resource usage of the process
 	4. Repeat to step 2 until all processes are satisfied
 
+## Deadlock Detection
+* `Single instance` of each resource type
+	* convert request/assignment edges into wait-for graph
+	* deadlock exists if there is a cycle in the wait-for graph
+
+* `Multiple-Instance` for each resource type
+	* Check if system is in a safe state -> no dead lock
+
+## Deadlock Recovery
+* `Process termination`
+	* abort all deadlocked processes
+	* abort 1 process at a time until the deadlock cycle is eliminated
+		* which process should we abort first?
+
+* `Resource preemption`
+	* select a victim: which one to preempt?
+	* rollback: partial rollback or total rollback?
+	* starvation: can the same process be preempted always?
+
 # References
 * [Operating System Course by Jerry Chou](https://www.youtube.com/watch?v=efH4nuwUalA&list=PLS0SUwlYe8czigQPzgJTH2rJtwm0LXvDX&index=62)
