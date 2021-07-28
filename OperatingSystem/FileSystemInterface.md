@@ -28,5 +28,25 @@
 * Direct(relative) access
 * Index access 
 
+## Directory Structure
+* Single-level directory
+* Two-level directory
+* Tree-structured directory
+* Acyclic-graph directory
+	* Use links to share files or directories
+		* UNIX-like: `symbolic link`(ln -s/spell/count/dict/count)
+	* A file can have `multiple absolute paths`
+	* When does a file actually get deleted?
+		* deleting the link but not the file
+		* deleting the file but leaves the link -> `dangling pointer`
+			* deleting the file when `reference counters` is 0
+
+* General-graph directory
+	* `May contain cycles`
+	* How can we deal with cycles?
+		* `Garbage collection`
+			* First pass traverses the entire graph and marks accessible files or directories
+			* Second pass collect and free everything that is unmarked
+
 # References
 * [Operating System Course by Jerry Chou](https://www.youtube.com/watch?v=xzjOe7-m6qc&list=PLS0SUwlYe8czigQPzgJTH2rJtwm0LXvDX)
