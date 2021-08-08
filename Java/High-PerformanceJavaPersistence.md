@@ -311,20 +311,55 @@ SQL> SELECT plan_table_output FROM table(dbms_xplan.display());
 	* If the statement string value changes from one execution to the other, the database cannot reuse an already generated execution plan. 
 		* For this purpose, dynamic-generated JDBC Statement(s) are not suitable for reusing execution plans.
 
-#### Forced Parameterization
-* Some database systems offer the possibility of intercepting SQL statements at runtime, so that all value literals are replaced with bind variables. 
-* This way, the newly parametrized statement can reuse an already cached execution plan.
-* To enable this feature, each database system offers a vendor-specific syntax.
-	* Oracle: ALTER SESSION SET cursor_sharing=force;
+* Forced Parameterization
+    * Some database systems offer the possibility of intercepting SQL statements at runtime, so that all value literals are replaced with bind variables. 
+    * This way, the newly parametrized statement can reuse an already cached execution plan.
+    * To enable this feature, each database system offers a vendor-specific syntax.
+	    * Oracle: ALTER SESSION SET cursor_sharing=force;
+
 * Server-side prepared statements allow the data access logic to reuse the same execution plan for multiple executions. 
 * A PreparedStatement is always associated with a single SQL statement, and bind parameters are used to vary the runtime execution context. 
-	* Because PreparedStatement(s) take the SQL query at creation time, the database can precompile the associated SQL statement prior to executing it.
+    * Because PreparedStatement(s) take the SQL query at creation time, the database can precompile the associated SQL statement prior to executing it.
 
 * Precompilation phase
 	* During the precompilation phase, the database validates the SQL statement and parses it into a syntax tree. 
 	* When it comes to executing the PreparedStatement, the driver sends the actual parameter values, and the database can jump to compiling and running the actual execution plan
-* TBD...	
-	
+
+* Index selectivity
+    * Because of index selectivity, in the absence of the actual bind parameter values, the Optimizer cannot compile the syntax tree into an execution plan. 
+    * Since a disk access is required for fetching every additional row-level data, indexing is suitable when selecting only a fraction of the whole table data. 
+    * Most database systems take this decision based on the index selectivity of the current bind parameter values.
+
+* For prepared statements, the execution plan can either be compiled on every execution or it can be cached and reused. 
+    * Recompiling the plan can generate the best data access paths for any given bind variable set while paying the price of additional database resources usage. 
+    * Reusing a plan can spare database resources, but it might not be suitable for every parameter value combination.
+
+##### 5.3.1 Bind-sensitive execution plans
+* The execution plan depends on bind parameter value selectivity. 
+* If the selectivity is constant across the whole bind value domain, the execution plan is no longer sensitive to parameter values.
+* A generic execution plan is much easier to reuse than a bind-sensitive one.
+
+###### Oracle
+* Every SQL statement goes through the Parser, where it is validated both syntactically and semantically. 
+* A hashing function takes the SQL statement, and the resulting hash key is used for searching the Shared Pool for an existing execution plan.
+* Oracle terminology:
+    * Soft parse: Reusing an execution plan
+        * To reuse a plan, the SQL statement must be identical with a previously processed one (even the case sensitivity and whitespaces are taken into consideration).
+    * Hard parse: If no execution plan is found, the Optimizer evaluates multiple execution plans and chooses the one with the lowest associated cost, which is further compiled into a source tree by the Row Source Generator.
+    * Whether reused (soft parse) or generated (hard parse), the source tree goes to the Executor, which fetches the associated result set.
+
+* Bind peeking
+    * The Optimizer cannot determine an optimal access path in the absence of the actual bind values. For this reason, Oracle uses bind peeking during the hard parse phase.
+    * As of 11g, Oracle has introduced adaptive cursor sharing, so a statement can utilize multiple execution plans. 
+        * The behavior is reactive to execution times, and bad plans are substituted with optimal ones for certain bind value combinations.
+
+* Both the execution plan cache and the adaptive cursor sharing are enabled by default.
+* For highly concurrent OLTP systems, hard parsing should be avoided as much as possible. 
+    * During execution plan generation, the database uses a latch to avoid multiple concurrent statements from
+    * accessing the same database objects. Latches introduce a serial execution, which, in turn, increases contention and decreases concurrency and scalability.
+
+* Q: Can we execute a query with hint for adaptive cursor sharing?
+    
 #### 5.4 Client-side statement caching
 
 * JDBC driver can reuse already constructed statement objects. The main goals of the client-side statement caching can be summarized as follows:
@@ -346,7 +381,8 @@ SQL> SELECT plan_table_output FROM table(dbms_xplan.display());
     * Oracle explicit statement caching
         * When using the explicit cache, the data access controls which statements are cacheable.
 
-		
+* Q: How Hibernate use Client-side statement caching -> Query Cache?
+
 ### 6.ResultSet Fetching
 ### 7.Transactions
 #### 7.5 Read-only transactions
