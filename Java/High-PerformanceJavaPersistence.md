@@ -381,7 +381,9 @@ SQL> SELECT plan_table_output FROM table(dbms_xplan.display());
     * Oracle explicit statement caching
         * When using the explicit cache, the data access controls which statements are cacheable.
 
-* Q: How Hibernate use Client-side statement caching -> Query Cache?
+* Q 5.4-1: How Hibernate use Client-side statement caching -> Query Cache?
+* A 5.4-1: [Hibernate Query Plan Cache](https://www.baeldung.com/hibernate-query-plan-cache)
+* Further Readings: [Query plan cache statistics](https://docs.jboss.org/hibernate/stable/orm/userguide/html_single/Hibernate_User_Guide.html#statistics-query-plan-cache)
 
 ### 6.ResultSet Fetching
 ### 7.Transactions
