@@ -86,5 +86,60 @@
 	* When no threads are available in the pool, the client may have to wait until one becomes available
 * Graceful performance degradation by limiting the pool size
 
+## Implementing JDBC
+
+### RMI
+* JDBC Programming
+1. Connect to the server
+2. Execute the desired query
+3. Loop through the result set(for SELECT only)
+`4. Close` the connection
+	* A result set ties up valuable resource on the server, such as buffers and locks
+	* Client should close it connection as soon as the database is no longer needed
+
+#### Implementing JDBC in VanillaCore
+* JDBC API is defined `at client side`
+* Needs both client- and server-side implementations
+	* in org.vanilladb.core.remote.jdbc package
+	* JdbcXxx are client-side classes
+	* RemoteXxx are server-side classes
+* Based on Java RMI
+	* Handles server threading: dispatcher thread, worker threads, and thread pool
+	* But no control to pool size
+	* `Synchronizes` a client thread with a worker thread
+		* Blocking method calls at clients
+
+#### Java RMI
+* Java RMI allows methods of an object at server VM to be invoked remotely at a client VM
+	* We call this object `a remote object`
+* How? -> The Stub and Skeleton
+```
+┌────────────┬──────┐ ─────call─────▻ ┌──────────┬────────────┐
+│ RMI Client │ Stub │                 │ Skeleton │ RMI Server │
+└────────────┴──────┘ ◅───return───── └──────────┴────────────┘
+```
+
+1. The `skeleton` (run by a server thread) binds the interface of the remote object
+2. A client thread looks up and obtain a `stub` of the skeleton
+3. When a client thread invokes a method, it is blocked and the call is first forwarded to the stub
+4. The stub marshals the parameters and  sends the call to the skeleton through the network
+5. The skeleton receives the call, unmarshals the parameters, allocates from pool a worker thread that runs the remote object's method on behalf of the client
+6. When the method returns, the worker thread returns the result to skeleton and returns to pool
+7. The skeleton marshals the results and send it to stub
+8. The stub unmarshals the results and continues the client thread
+
+* RMI Registry
+	* The server must first bind the remote object's interface to the registry with a name
+		* The interface must extend the java.rmi.Remote interface
+
+* Things to Note
+	* A client thread and a worker thread is synchronized
+	* The same remote object is run by multiple worker threads(each per client)
+		`* Remote objects bound to registry must be thread-safe`
+	* If the return of a remote method is another remote object, the sub of that object is created automatically and sent back to the client
+		* The object can be either thread-local or thread-safe, depending on whether it is created or reused during each method call
+	* A remote object will `not` be garbage collected if there's a client holding its stub
+		* Destroy stub(e.g., closing connection) at client side ASAP
+
 # References
 * [Introduction to Database System by Shan-Hung Wu](https://www.youtube.com/watch?v=E4DLGaZGWMk&list=PLS0SUwlYe8cyln89Srqmmlw42CiCBT6Zn&index=15)
