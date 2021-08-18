@@ -1,8 +1,38 @@
 # Server and Threads
-## Serialized or interleaved operations?
+
+## Processes, threads, and resource management  
+
+### Processes and threads
+
+#### Differences between Process and Thread
+* Thread = a unit of CPI execution + local resources
+	* e.g.m program counter, registers, function call stack, etc.
+* Process = threads(at least one) + global resources 
+	* e.g., memory space/heap, `open files`, etc.
+
+#### Differences between Kernel thread and User thread
+* Kernel thread: scheduled by OS. e.g., POSIX Pthreads(UNIX), Win32 threads
+* User thead:
+	* Scheduled by user applications(in user space above the kernel)
+		* Lightweight -> faster to create/destroy
+		* Examples: POSIX Pthreads(UNIX), Java threads
+	* Eventually mapped to kernel threads
+		* Many-to-One
+		* One-to-One
+		* Many-to-Many
+
+	* Java Thread
+		* Scheduled by JVM
+		* Mapping depends on the JVM implementation
+			* But normally one-to-one mapped to Pthreads/Win32 threads on UNIX/Windows
+		* Pros over POSIX(one2one) threads: System independent(if there's a JVM)
+
+### Supporting concurrent clients
+
+#### Serialized or interleaved operations?
 * Throughput via Pipelining: Interleaving ops increases throughput by `pipelining CPU and I/O`
 
-## Statements run by processes or threads?
+#### Statements run by processes or threads?
 * DBMS is about resource management
 	* Opened files
 	* Buffers(to cache pages)
@@ -25,7 +55,7 @@
 		* Initialize file, log, buffer, metadata, and tx mgrs
 		* Create or recover the specified database
 
-## Embedded Clients
+### Embedded Clients
 * Running on the same machine as RDBMS
 * Usually Single-threaded
 	* e.g. sensor nodes, dictionaries, phone apps, etc
@@ -34,7 +64,7 @@
 	* Run each group of causal statements in a thread
 	* No causal relationship between the results outputted by different groups
 
-## Remote Clients
+### Remote Clients
 * Server has a server/dispatcher thread which keeps listening for client requests
 * If the server thread get a client request, it will create a new thread(worker thread) to service the request
 * One worker thread per request
