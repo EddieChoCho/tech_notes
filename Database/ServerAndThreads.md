@@ -141,5 +141,90 @@
 	* A remote object will `not` be garbage collected if there's a client holding its stub
 		* Destroy stub(e.g., closing connection) at client side ASAP
 
+### Remote Interfaces and client-side wrappers
+* Server-Side JDBC Impl
+	* RemoteXxx classes that mirror their corresponding `JDBC interfaces` at client-side
+		* Implement the most essential JDBC method only
+	* Interfaces: RemoteDriver, RemoteConnection, RemoteStatement, RemoteResultSet and RemoteMetaData
+		* To be bound to registry
+		* Extend java,rmi.Remote
+		* Throw RemoteException instead of SQLException 
+
+* Registering Remote Objects
+	* Only the RemoteDriver need to be bound to registry
+		* Stubs of other can be obtained by method returns
+	* Done by `JdbcStartUp`:
+		```
+		/* create a registry specific for the server on the default port 1099 */
+		Registry reg = LocateRegistry.createRegistry(1099);
+		
+		// post the server entry in it
+		RemoteDriver d = new RemoteDriverImpl();
+
+		/* create a stub for the remote implementation object d, save it in the RMI registry */
+		reg.rebind("vanilladb-jdbc", d);
+		```		
+
+* Obtaining Stubs
+	* To obtain the stubs at client-side:
+		```
+		// url = "jdbc:vanilladb://xxx.xxx.xxx.xxx:1099"
+		String host = url.replace("jdbc:vanilladb://", "");
+		Registry reg = LocateRegistry.getRegistry(host);
+		RemoteDriver rdvr = (RemoteDriver)reg.lookup("vanilladb-jdbc");
+
+		// creates connection
+		RemoteConnection rconn = rdvr.connect();
+		// creates statement
+		RemoteStatement rstmt = rconn.createStatement();
+		```
+	* Directly through registry or indirectly through method returns
+
+* JDBC Client-Side Impl
+	* Implement java.sql interfaces using the client-side `wrappers of stubs`
+		* e.g., JdbcDriver wraps the stub of RemoteDriver
+
+### Remote Implementations
+* RemoteDriverImpl
+	* RemoteDriverImpl is the entry point into the server
+	* Each time its connect method is called (via the stub), it creates a new RemoteConnectionImpl on the server
+		* RMI creates the corresponding stub and returns back it to the client
+	* `Run by multiple threads, must be thread-safe`
+
+* RemoteConnectionImpl
+	* Manages client connections on the server
+		* Associated with a tx
+		*  commit() commits the current tx and starts a new one immediately
+	*  `Thread local`
+
+* RemoteStatementImpl
+	* Executes SQL statements
+		* Creates a planner that finds the best plan tree
+	* If the connection is set to be `auto commit`, the executeUpdate() method will call connection.commit() in the end
+	* `Thread local`
+
+* RemoteResultSetImpl
+	* Provides methods for iterating the output records
+		* The scan opened from the best plan tree
+	* Tx spans through the iteration
+		* Avoid doing heavy jobs during the iteration
+	* `Thread local`
+
+* RemoteMetaDataImpl
+	* Provides the schema information about the query results
+		* Contains the Schema object of the output table
+	* `Thread local`
+
+### StartUp
+* StartUp provides main() that runs VanillaCore as a JDBC server
+	* Calls VanillaDB.init()
+		* Sharing global resources through static variables
+	* Binds RemoteDriver to RMI registry
+		* One thread per connection
+
+### Threading in Engines(Generally)
+* Classes in the query engine are thread-local
+* Classes in the storage engine are thread-safe
+
 # References
 * [Introduction to Database System by Shan-Hung Wu](https://www.youtube.com/watch?v=E4DLGaZGWMk&list=PLS0SUwlYe8cyln89Srqmmlw42CiCBT6Zn&index=15)
