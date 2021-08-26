@@ -103,3 +103,9 @@
 * Cancelling a Consumer (Unsubscribing)
 	* To cancel a consumer its identifier (consumer tag) must be known.
 	* After a consumer is cancelled there will be no future deliveries dispatched to it. Note that there can still be "in flight" deliveries dispatched previously. Cancelling a consumer will not discard them.
+
+### Concurrency Considerations
+* Java and .NET clients guarantee that deliveries on a single channel will be dispatched in the same order there were received regardless of the degree of concurrency. 
+* Note that once dispatched, concurrent processing of deliveries will result in a natural race condition between the threads doing the processing.
+* Certain clients (e.g. Bunny) and frameworks might choose to limit consumer dispatch pool to a single thread (or similar) to avoid a natural race condition when deliveries are processed concurrently. 
+* Some applications depend on strictly sequential processing of deliveries and thus must use concurrency factor of one or handle synchronisation in their own code.
