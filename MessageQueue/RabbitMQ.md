@@ -109,3 +109,22 @@
 * Note that once dispatched, concurrent processing of deliveries will result in a natural race condition between the threads doing the processing.
 * Certain clients (e.g. Bunny) and frameworks might choose to limit consumer dispatch pool to a single thread (or similar) to avoid a natural race condition when deliveries are processed concurrently. 
 * Some applications depend on strictly sequential processing of deliveries and thus must use concurrency factor of one or handle synchronisation in their own code.
+
+#### Message Ordering
+* FIFO
+* Ordering also can be affected by the presence of multiple competing consumers, consumer priorities, message redeliveries. This applies to redeliveries of any kind: automatic after channel closure and negative consumer acknowledgements.
+
+* From consumer's point of view
+	* Consuming applications can assume that initial deliveries (those where the redelivered property is set to false) to a single consumer are performed in the same FIFO order as they were enqueued. 
+	* `For repeated deliveries (the redelivered property is set to true), original ordering can be affected by the timing of consumer acknowledgements and redeliveries, and thus not guaranteed.`
+	    * Negative Acknowledgement and Requeuing of Deliveries
+            * Sometimes a consumer cannot process a delivery immediately but other instances might be able to. 
+            * In this case it may be desired to requeue it and let another consumer receive and handle it. basic.reject and basic.nack are two protocol methods that are used for that.
+            * When a message is requeued, it will be placed to its original position in its queue, if possible. 
+            * If not (due to concurrent deliveries and acknowledgements from other consumers when multiple consumers share a queue), the message will be requeued to a position closer to queue head.
+ 
+
+* In case of multiple consumers, 
+	* messages will be dequeued for delivery in the FIFO order but actual delivery will happen to multiple consumers. If all of the consumers have equal priorities, they will be picked on a round-robin basis. Only consumers on channels that have not exceeded their prefetch value (the number of outstanding unacknowledged deliveries) will be considered.
+
+
