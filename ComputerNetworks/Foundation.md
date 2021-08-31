@@ -73,5 +73,46 @@
 * Messages are delivered out-of-order
 * Third parties eavesdrop
 
+## Network Architecture
+* Example of a layered network system:
+    * Application Programs
+    * Process-to-process Channels
+    * Host-to-Host Connectivity
+    * Hardware
+
+* Protocols
+    * `Protocol` defines the `interfaces` between
+        * the layers in the same system and with
+        * the layers of peer system
+    * Building blocks of a `network architecture`
+    * Each protocol object has two different interfaces
+        * `Service interface`: operations on this protocol
+            * e.g., Inside a host, the higher-level object operates the protocol through it's service interface. 
+        * `Peer-to-peer interface`: messages exchanged with peer
+            * e.g., 2 hosts communicate through the peer-to-peer interface of the protocol.
+
+    * `Protocol Specification`: pseudo-code, state transition diagram, message format
+    * `Interoperable`: when two or more protocols that implement the specification accurately
+    * IETF: Internet Engineering Task Force
+        * Define Internet standard protocols
+ 
+* Protocol Architecture
+    * Example of a protocol architecture
+    * nodes are the protocols and links the “depends-on” relation
+
+    ```
+    [FTP] [HTTP] [DNS]
+     └──┬─────┘   │
+        │         │ 
+       [TCP]    [UDP]
+         └──┬─────┘
+            │
+           [IP]
+            │
+         [Internet]
+    ``` 
+    * Encapsulation: High-level messages are encapsulated inside of low-level messages
+
+ 
 # References
 * [Introduction to Computer Networks by Nen-Fu Huang](https://youtube.com/playlist?list=PLS0SUwlYe8cxktXNovos9xleroaWyb-z5)
