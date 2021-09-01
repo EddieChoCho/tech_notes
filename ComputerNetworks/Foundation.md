@@ -113,6 +113,48 @@
     ``` 
     * Encapsulation: High-level messages are encapsulated inside of low-level messages
 
- 
+## Network Performance
+* `Bandwidth`
+    * Width of the frequency band
+    * Number of bits per second that can be transmitted over a communication link
+  
+* 1 Mbps: 1 x 10^6 bits/second 
+* 1 x 10^-6 seconds to transmit each bit or imagine that a timeline, now each bit occupies 1 micro second space.
+* On a 2 Mbps link the width is 0.5 micro second.
+* Smaller the width more will be transmission per unit time.
+* Bits transmitted at a particular bandwidth can be regarded as having some width
+
+* `Latency` = Propagation time + transmission time + queuing time
+* `Propagation time` = distance/speed of light
+* `Transmission time` = size/bandwidth
+    * One bit transmission => propagation is important (Propagation time >> transmission time)
+    * Large bytes transmission => bandwidth is important (Transmission time >> propagation time)
+    
+### Delay X Bandwidth
+* The channel between a pair of processes can be viewed as a pipe
+    * `Latency (delay)`: length of the pipe
+    * `Bandwidth`: width of the pipe
+* Delay x Bandwidth means how many data can be stored in the pipe
+* For example, delay of 80 ms and bandwidth of 100 Mbps
+    * 80 x 10-3 seconds x 100 x 106 bits/second
+     * 8 x 106 bits = 8 M bits = 1 MB data.
+
+* Relative importance of bandwidth and latency depends on application
+    * `For large file transfer, bandwidth is critical`
+    * `For small messages (HTTP, NFS, etc.), latency is critical`
+    * Variance in latency (jitter) can also affect some applications (e.g., audio/video conferencing)
+
+* If the sender keeps the pipe full, `delay x bandwidth` is the number of bits the sender must transmit before the first bit arrives at the receiver.
+* Takes another one-way latency to receive a response from the receiver
+* The sender will not fully utilize the network if the sender does not fill the pipe
+    * send a whole `delay × bandwidth`(keep the pipe full) product’s worth of data before it stops to wait for a signal
+
+### Throughput
+* `Infinite bandwidth`
+    * RTT (Round Trip Time) dominates
+    * `Throughput` = TransferSize / TransferTime
+    * TransferTime = RTT + TransferSize/Bandwidth
+    * 1-MB file to 1-Gbps link looks like a 1-KB packet to 1-Mbps link
+
 # References
 * [Introduction to Computer Networks by Nen-Fu Huang](https://youtube.com/playlist?list=PLS0SUwlYe8cxktXNovos9xleroaWyb-z5)
