@@ -6,7 +6,8 @@
 
 * Heap
     * Each java application gets it’s own memory space (heap).
-    * Instance variables
+    * Stores objects(Instance variables)
+    * Shared by all threads
 
 * Thread
     * A thread is a unit of execution within a process. Each process can have multiple threads. Every thread created by a process shares the process's memory and files.
@@ -27,6 +28,39 @@
 * concurrent program running on a single processor should actually have more overhead than if all the parts of the program ran sequentially, because of the added cost of the so-called `context switch` (changing from one task to another).
 * From a performance standpoint, it makes no sense to use concurrency on a single-processor machine unless one of the tasks might block.
 * Example of performance improvements in single-processor systems: event-driven programming.
+
+### Blocking and Waiting States[4]
+* Threads are `blocked` outside a critical section if someone is in
+* Thread A in a critical section of o can stop and enter the `waiting` state by calling o.wait()
+    * Gives up the lock, so some other blocking thread B can enter the critical section
+    * If B calls o.notifyAll(), A competes for the lock again and resume
+
+### Wrap wait() in a Loop[4]
+* It’s a good practice to warp wait() in a loop to prevent bugs
+
+
+```
+// enqueue, Thread A, B
+synchronized(queue) {
+    while(queue.size() == 10) {
+        queue.wait();
+    }
+    queue.add(...);
+    queue.notifyAll();
+}
+```
+
+```
+// dequeue, Thread C, D
+synchronized(queue) {
+    while (queue.size() == 0) {
+        queue.wait();
+    }
+    ... = queue.remove();
+    queue.notifyAll();
+}
+```
+ 
 
 ### Atomicity
 * Atomic operations do not need to be synchronized.
@@ -254,3 +288,5 @@ String combined = Stream.of(future1, future2, future3)
 * [1][Thinking in Java](https://www.amazon.com/Thinking-Java-4th-Bruce-Eckel/dp/0131872486)
 * [2][A Guide to the Java ExecutorService | Baeldung](https://www.baeldung.com/java-executor-service-tutorial)
 * [3][Guide To CompletableFuture | Baeldung](https://www.baeldung.com/java-completablefuture)
+* [4][Java Concurrency by Shan-Hung Wu & DataLab CS, NTHU]()
+* [5][Java Concurrency Tutorial](https://docs.oracle.com/javase/tutorial/essential/concurrency/)
