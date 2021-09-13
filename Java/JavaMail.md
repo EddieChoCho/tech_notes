@@ -5,6 +5,22 @@
 * A `Session` object is used to tie `message stores`, `transports`, and `messages` together
 * The standard JavaMail implementation from Sun provides for `POP3 and IMAP message stores`, and for `SMTP message transport`.
 
+#### The Session Class[2]
+* The Session class defines global and per-user mail-related properties that define the interface between a mail-enabled client and the network. 
+    * A Session object manages the configuration options and user authentication information used to interact with messaging systems.
+
+* The Session class also acts as a factory for Store and Transport objects that implement specific access and transport protocols. 
+
+#### Transport Protocols and Mechanisms[3]
+     
+* Three Ways to Obtain the Transport Object
+    1. getTransport(Address address) returns the implementation of the transport class based on the address type. A user-extensible map defines which transport type to use for a particular address. 
+        * e.g., if the address is an InternetAddress, and InternetAddress is mapped to a protocol that supports SMTP then SMTPTransport can be returned.
+    2. The client can also call getTransport(“smtp”) to request SMTP, or another transport implementation protocol.
+    3. getTransport() returns the transport specified in the mail.transport.protocol property.
+
+* TBD: Connection management
+
 ### Understanding Enterprise Email
 * RFC 822
 * MIME(Multimedia Internet Mail Extensions) gave email messages the ability to exchange any kind of content, rather than just text, by standardizing the schemes for encoding bytes into text and identifying what those bytes were supposed to be after they were turned back.
@@ -93,4 +109,5 @@
 	* This is particularly true of the message IDs provided by the message store, which are not constant or unique beyond the context of the current connection.
 	
 ## References
-* [1][Java Enterprise Best Practices - by O'Reilly Java Authors](https://www.oreilly.com/library/view/java-enterprise-best/0596003846/)
+* [1][Java Enterprise Best Practices by O'Reilly Java Authors](https://www.oreilly.com/library/view/java-enterprise-best/0596003846/)
+* [2][JavaMailTM API Design Specification Version 1.6](https://javaee.github.io/javamail/docs/JavaMail-1.6.pdf)
