@@ -129,6 +129,35 @@
 
 
 ### Granularity of locks
+* Granularity of locking objects – Records vs. blocks vs. tables/files
+    * Fine granularity: high concurrency, high locking overhead
+    * Coarse granularity: low locking overhead, low concurrency
 
+* Reducing Locking Overhead
+    * Data “containers” are nested: Database -> tables -> pages -> tuples
+    * e.g., When scanning, can we lock a file instead of all contained blocks/records to reduce the locking overhead? -> MGL(Multiple-Granularity Locks)
+   
+#### Multiple-Granularity Locks
+* Multiple-granularity locking (MGL) allows users to set locks on objects that contain other objects
+    * Locking a file implies locking all contained blocks/records
+    * How does a lock manager know if a file is lockable?
+        * Some other tx may hold a conflicting lock on a block in that file
+
+* Checking If An Object Is Locked
+
+    * Solution 1:To lock a file, check whether all blocks/records in that file are locked
+        * Bad strategy - Does not save the locking overhead
+
+    * Allow transactions to lock at each level, but `with a special protocol using new “intention” locks`:
+        * `Intention-shared` (IS)
+            * Indicates explicit locking at a lower level of the tree but only with shared locks
+        * `Intention-exclusive` (IX)
+            * Indicates explicit locking at a lower level with exclusive or shared locks
+        * `Shared and intention-exclusive` (SIX)
+            * The subtree rooted by that node is locked explicitly in shared mode and explicit locking is being done at a lower level with exclusive-mode locks
+
+* Locks are acquired in `root-to-leaf` order
+* Locks need to be released in `leaf-to-root` order
+     
 # References
 * [Introduction to Database System by Shan-Hung Wu](https://www.youtube.com/playlist?list=PLS0SUwlYe8cyln89Srqmmlw42CiCBT6Zn)
