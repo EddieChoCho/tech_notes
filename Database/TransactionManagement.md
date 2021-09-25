@@ -1,10 +1,46 @@
 # Transaction Management: Concurrency Control
 
- * Consistency
- * Isolation
+## Transactions
+* Ensures ACID
+    * `Concurrency manager` for C and I
+    * `Recovery manager` for A and D
+
+* Transaction Lifecycle
+    1. Begin
+    2. End statement
+        – If spanning across multiple statements
+    3. Commit or rollback
+
+* Lifecycle Listeners
+    * Tx lifecycle listener – Takes actions to tx life cycle events
+    * Buffer manager
+        * On tx rollback/commit: unpins all pages pinned by the current tx
+        * Registered itself as a life cycle listener on start of each tx
+    
+    * Recovery manager
+        * Commit: flushes dirty pages and then commit log
+        * Rollback: undo all modifications by reading log records
+        
+ ## Concurrency Manager - Ensures `consistency` and `isolation`
+ * `Consistency`
+    * Txs will leave the database in a consistent state
+    * I.e., all integrity constraints (ICs) are meet
+        * Primary and foreign key constrains
+        * Non-null constrain
+        * (Field) type constrain
+        * …
+    * Users are responsible for issuing “valid” txs
+    
+ * `Isolation`
  	* Interleaved execution of txs should have the net effect identical to executing tx in some serial order.
- 	* T1 and T2 are executed concurrently, isolation gives that the net effect to be equivalent to either T1 followed by T2 ot T2 followed by T1.
+ 	* T1 and T2 are executed concurrently, isolation gives that the net effect to be equivalent to either T1 followed by T2 or T2 followed by T1.
  	* The DBMS does not guarantee the result in which particular order.
+
+* Concurrent Txs
+    * Pros:
+        * Increases throughput (via CPU and I/O pipelining)
+        * Shortens response time for short txs
+    * But operations must be interleaved correctly
 
 ## Transactions and Schedules
 * A schedule is a list of actions/operations from a set of transactions.
@@ -68,13 +104,13 @@
 * Each tx obtains locks as in the growing phase in 2PL.
 * But the tx `holds all locks until it completes`.(Only growing phase, shrinking phase happens when the transaction is ending)
 * Allows only serializable and strict schedules.
-* Stric schedules
+* Strict schedules
 	* A schedule is strict if for any two txs T1 and T2, if a write operation of T1 precedes a conflicting operation of T2(either read or write), then Y1 commits before that conflicting operation of T2.
 	* Avoids cascading rollback, but still has deadlock.
 
 ### Deadlock
 * Detect `Waits-for` graph when acquiring locks(or buffers)
-* Otehr techniques
+* Other techniques
 	* Timeout & rollback(deadlock detection)
 		* Assume Ti wants a lock that Tj holds
 		* Ti waits for the lock
