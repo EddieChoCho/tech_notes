@@ -387,6 +387,54 @@ SQL> SELECT plan_table_output FROM table(dbms_xplan.display());
 
 ### 6.ResultSet Fetching
 ### 7.Transactions
+#### Atomicity
+* An all-or-nothing unit of work
+  * Note: Write-write conflicts
+    * Ideally, every transaction would have a completely isolated branch which could be easily discarded in case of a rollback. 
+* In case of rollback, the database must revert any pending changed datum to its previous state.
+* Note: Oracle
+  * The undo tablespace stores the previous data versions in undo segments. Upon rolling back, the database engine searches the associated undo segments that can recreate the before image of every datum that was changed by the current running transaction.
+
+#### Consistency
+* Consistency is about validating(column types, length, nullability, fk, uk, custom check constraints) the transaction state change, so that all committed transactions leave the database in a proper state. 
+* If only one constraint gets violated, the entire transaction is rolled back and all modifications are going to be reverted.
+
+#### Isolation
+* The execution order of all the current running transaction operations is said to be serializable when its outcome is the same as if the underlying transactions were executed one after the other.
+
+##### Concurrency control
+* There are basically two strategies for handling data collisions:
+  * avoiding conflicts (e.g. two-phase locking) requires locking to control access to shared resources
+  * detecting conflicts (e.g. Multi-Version Concurrency Control) provides better concurrency, at the price of relaxing serializability and possibly accepting various data anomalies.
+  
+* Two-phase locking
+    * Initially all database systems employed 2PL for implementing serializable transactions, but, with time, many vendors have moved towards an MVCC (Multi-Version Concurrency Control) architecture. By default, SQL Server still uses locking for implementing the serializability isolation level.
+    * But locking isn’t used only in 2PL implementations, and, to address both DML and DDL statement interaction and to minimize contention on shared resources, relational database systems use Multiple granularity locking.
+    * Most common types of lock:
+        * shared (read) lock, preventing a record from being written while allowing concurrent reads
+        * exclusive (write) lock, disallowing both read and write operations.
+
+    * 2PL lock management strategy for ensuring serializability:
+        * A concurrency control strategy must define how locks are being acquired and released because this also has an impact on transaction interleaving.
+            * expanding phase (locks are acquired and no lock is released)
+            * shrinking phase (all locks are released and no other lock is further acquired)
+
+    * Note: Transaction schedule
+        * Strict schedule: If a write operation, in a first transaction, happens before a conflict occurring in a subsequent transaction, in order to achieve transaction strictness, the first transaction commit event must also happen before the conflict.
+        * Because operations are properly ordered, strictness can prevent cascading aborts. 
+        * Releasing all locks only after the transaction has ended (either commit or rollback) is a requirement for having a strict schedule.
+
+    * Deadlocks
+        * The database engine runs a separate process that scans the current conflict graph for lock-wait cycles (which are caused by deadlocks). When a cycle is detected, the database engine picks one transaction and aborts it, causing its locks to be released, so the other transaction can make progress.
+
+* Multi-Version Concurrency Control
+    * To address these shortcomings, the database vendors have opted for optimistic concurrency control mechanisms. 
+    * If 2PL prevents conflicts, Multi-Version Concurrency Control (MVCC) uses a conflict detection strategy instead.
+    * The promise of MVCC is that readers don’t block writers and writers don’t block readers.
+        * Note: Oracle 
+            * Oracle doesn’t implement 2PL at all, relying on MVCC mechanism for managing concurrent data access.
+            * Apart from MVCC, Oracle also supports explicit locking as well, using the SELECT FOR UPDATE SQL syntax.
+        
 #### 7.5 Read-only transactions
 * The JDBC Connection defines the setReadOnly(boolean readOnly)⁷ method which can be used to hint the driver to apply some database optimizations for the upcoming read-only transactions. 
 * This method shouldn’t be called in the middle of a transaction because the database system cannot turn a read-write transaction into a read-only one (a transaction must start as read-only from the very beginning)
