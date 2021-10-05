@@ -434,7 +434,55 @@ SQL> SELECT plan_table_output FROM table(dbms_xplan.display());
         * Note: Oracle 
             * Oracle doesn’t implement 2PL at all, relying on MVCC mechanism for managing concurrent data access.
             * Apart from MVCC, Oracle also supports explicit locking as well, using the SELECT FOR UPDATE SQL syntax.
-        
+
+##### Phenomena
+* Choosing a certain isolation level is a trade-off between increasing concurrency and acknowledging the possible anomalies that might occur.
+* Relaxing serializability guarantees may generate data integrity anomalies, which are also referred as phenomena.
+
+* The SQL-92 standard introduced three phenomena:
+	* Dirty Read
+		* This anomaly is only permitted by the Read Uncommitted isolation level.
+		* Most database systems offer a higher default isolation level.
+		* To prevent dirty reads, the database engine must hide uncommitted changes from all the concurrent transactions.
+			* A naive approach would be to lock uncommitted rows but this wouldn’t be practical at all. Locks incur contention and contention affects scalability.
+			* Since the undo log already captures the previous version of every uncommitted record, the database engine can use it to restore the previous value in other concurrent transaction queries. 
+
+	* Non-repeatable Read
+		* If one transaction reads a database row without applying a shared lock on the newly fetched record, then a concurrent transaction might change this row before the first transaction has ended.
+		* MVCC: By verifying the current row version, a transaction can be aborted if a previously fetched record has changed in the meanwhile.
+		* Some ORM frameworks (e.g. JPA/Hibernate) offer application-level repeatable reads. The first snapshot of any retrieved entity is cached in the current running Persistence Context. Any successive query returning the same database row is going to use the very same object that was previously cached.
+
+	* Phantom Read
+		* If a transaction makes a business decision based on a set of rows satisfying a given predicate, without predicate locking, a concurrent transaction might insert a record matching that particular predicate.
+		* Traditionally, the Serializable isolation prevented phantom reads through predicate locking. 
+		* Other MVCC implementations can detect phantom rows by introspecting the transaction schedule and aborting any transaction whose serializability guarantees were violated.
+
+* A Critique of ANSI SQL Isolation Levels describes:
+	* Dirty Write
+		* A dirty write happens when two concurrent transactions are allowed to modify the same row at the same time.
+		* A transaction overwrites the pending change of another transaction.
+		* If the two transactions commit, one transaction will silently overwrite the other transaction, causing a `lost update`.
+		* Another problem arises when the first transaction wants to roll back.
+		* Although the SQL standard doesn’t mention this phenomenon, even the lowest isolation level (Read Uncommitted) is able to prevent it.
+
+	* Read Skew
+		* Involves a constraint on more than one database tables. (Non-repeatable read with multiple tables?)
+		* Two ways to avoid this phenomenon:
+			* The first transaction can acquire shared locks on every read, therefore preventing the second transaction from updating these records.
+			* The first transaction can be aborted upon validating the commit constraints (when using an MVCC implementation of the Repeatable Read or Serializable isolation levels).
+
+	* Write Skew
+		* Like read skew, this phenomenon involves disjoint writes over two different tables that are constrained to be updated as a unit. 
+		* Two ways to avoid this phenomenon:
+			* The first transaction can acquire shared locks on both entries, therefore preventing the second transaction from updating these records
+			* The database engine can detect that another transaction has changed these records, and so it can force the first transaction to roll back (under an MVCC implementation of Repeatable Read or Serializable).
+
+	* Lost Update
+		* When a transaction reads a row while another transaction modifies itprior to the first transaction to finish.
+		* Traditionally, Repeatable Read protected against lost updates since the shared locks could prevent a concurrent transaction from modifying an already fetched record.
+		* With MVCC, the second transaction is allowed to make the change, while the first transaction is aborted when the database engine detects the row version mismatch (during the first transaction commit).
+		* Most ORM tools, such as Hibernate, offer application-level optimistic locking, which automatically integrates the row version whenever a record modification is issued.
+		
 #### 7.5 Read-only transactions
 * The JDBC Connection defines the setReadOnly(boolean readOnly)⁷ method which can be used to hint the driver to apply some database optimizations for the upcoming read-only transactions. 
 * This method shouldn’t be called in the middle of a transaction because the database system cannot turn a read-write transaction into a read-only one (a transaction must start as read-only from the very beginning)
