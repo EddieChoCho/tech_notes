@@ -484,10 +484,10 @@ SQL> SELECT plan_table_output FROM table(dbms_xplan.display());
 		* Most ORM tools, such as Hibernate, offer application-level optimistic locking, which automatically integrates the row version whenever a record modification is issued.
 		
 #### 7.5 Read-only transactions
-* The JDBC Connection defines the setReadOnly(boolean readOnly)⁷ method which can be used to hint the driver to apply some database optimizations for the upcoming read-only transactions. 
+* The JDBC Connection defines the setReadOnly(boolean readOnly) method which can be used to hint the driver to apply some database optimizations for the upcoming read-only transactions. 
 * This method shouldn’t be called in the middle of a transaction because the database system cannot turn a read-write transaction into a read-only one (a transaction must start as read-only from the very beginning)
 * Oracle
-	* According to the JDBC driver documentation the database server does not support read-only transaction optimizations. 
+	* According to the JDBC driver documentation the database server does not support read-only transaction optimizations. 
 	* Even when the read-only Connection status is set to true, modifying statements are still permitted, and the only way to restrict such statements is to execute the following SQL command:
 
 	```
@@ -508,7 +508,38 @@ SQL> SELECT plan_table_output FROM table(dbms_xplan.display());
 * By default, every Connection starts in auto-commit mode, each statement being executed in a separate transaction. Unfortunately, it doesn’t work for multi-statement transactions as it moves atomicity boundaries from the logical unit of work to each individual statement.
 * Auto-commit should be avoided as much as possible, and, even for single statement transactions, it’s good practice to mark the transaction boundaries explicitly.
 
+##### 7.6.1 Distributed transactions
+* Two-phase commit: a prepare and a commit phase controlled by a transaction manager.
+    * The one-phase commit (1PC) optimization: When a transaction enlists only one resource adapter (designating a single resource manager), the transaction manager can skip the prepare phase, and either execute the commit or the rollback phase.
 
+##### 7.6.2 Declarative transactions
+* Transaction boundaries are usually associated with a Service layer, which uses one or more DAO to fulfil the business logic. 
+* The transaction propagates from one component to the other within the service-layer transaction boundaries.
+    * Transaction propagation strategies: REQUIRED, REQUIRES_NEW, SUPPORTS, ...etc.
+
+* Declarative exception handling
+    * By default, both Java EE and Spring roll back on system exceptions (any RuntimeException) and commit on application exceptions (checked exceptions).
+    * Spring allows each transaction to customize the rolling back policy by listing the exception types triggering a transaction failure.
+
+* Declarative read-only transactions
+    * Spring offers the transactional read-only attribute, which can propagate to the underlying JPA provider (to optimize the EntityManager flushing mechanism) and to the current associated JDBC Connection.
+
+* Declarative isolation levels
+    * Spring supports transaction-level isolation levels when using the JPATransactionManager.
+
+#### 7.7 Application-level transactions
+* From the application perspective, a business workflow might span over multiple physical database transactions, in which case the database ACID guarantees will not be sufficient anymore.
+    * Spanning a database transaction over multiple web requests is prohibitive since locks would be held during user think time, therefore hurting scalability.
+    * In a highly concurrent environment, database transactions are bound to be as short as possible. 
+    * Application-level transactions require application-level concurrency control mechanisms.
+ 
+#### 7.7.1 Pessimistic and optimistic locking
+* Pessimistic locking
+    * Acquiring locks on critical records can prevent non-repeatable reads, lost updates, as well as read and write skew phenomena.
+
+* Optimistic locking
+    * Using timestamps to order events is rarely a good idea. System time is not always monotonically incremented, and it can even go backwards, due to network time synchronization.
+    * For this reason, employing a numerical record version is more appropriate than assigning timestamps to row updates.
 
 ## III.JPA and Hibernate
 ### 8.Why JPA and Hibernate matter
