@@ -1,3 +1,13 @@
+* Getting an Execution Plan
+    ```sql
+    EXPLAIN PLAN FOR select * from ...;
+
+    ```
+* Showing Execution Plans
+    ```sql
+    select * from table(dbms_xplan.display);
+    ```
+
 ## Latency and Bandwidth.
 * Bandwidth has only a minor impact on the response time but latencies have a huge impact. 
 * That means that the number of database round trips is more important for the response time than the amount of data transferred.
