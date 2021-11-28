@@ -154,10 +154,79 @@
         * `Intention-exclusive` (IX)
             * Indicates explicit locking at a lower level with exclusive or shared locks
         * `Shared and intention-exclusive` (SIX)
-            * The subtree rooted by that node is locked explicitly in shared mode and explicit locking is being done at a lower level with exclusive-mode locks
+            * The subtree rooted by that node is locked explicitly in shared mode and explicit locking is being done at
+              a lower level with exclusive-mode locks
 
 * Locks are acquired in `root-to-leaf` order
 * Locks need to be released in `leaf-to-root` order
-     
+
+## Dynamic Databases
+
+* The database can grow and shrink through the `insertions` and `deletions`.
+    * Any trouble? `Phantoms`
+
+### Phantom
+
+* Phantoms Caused by Insertion
+    ```
+    – T1: SELECT * FROM users WHERE age=10;
+    – T2: INSERT INTO users VALUES (3, 'Bob', 10); COMMIT;
+    – T1: SELECT * FROM users WHERE age=10;
+    ```
+    * A transaction that reads the entire contents of a table multiple times will see different data.
+        * e.g., in a join query
+
+* Phantoms Caused by Update
+    ```
+    – T1: SELECT * FROM users WHERE age=10;
+    – T2: UPDATE users SET age=10 WHERE id=7;
+    COMMIT;
+    – T1: SELECT * FROM users WHERE age=10;
+    ```
+    * T1 only share locks the records with the age equals to 10
+    * The record with id=7 is not in the locking item set of T1, so T2 can update this record
+
+#### How to Prevent Phantoms?
+
+* EOF locks or multi-granularity locks
+    * X-lock the containing file when inserting/updating records in a block
+    * Hurt performance (no concurrent inserts/updates)
+    * Usually used to prevent phantoms by insert
+    * But `not` phantoms by update
+
+* Index (or predicate) locking
+    * Prevent phantoms caused by both insert and update
+    * Works only if indices for the inserting/updating fields are created
+
+### Isolation levels
+
+* Transaction Characteristics
+    * SQL allows users to specify the followings:
+        * `Access model`
+            * READ ONLY or READ WRITE
+            * By Connection.setReadOnly() in JDBC
+        * `Isolation level`
+            * Trade anomalies for better tx concurrency
+            * By Connection.setTransactionIsolation()
+
+* Defined by the ANSI/ISO SQL standard:
+
+| Isolation level  | Dirty reads | Unrepeatable reads | Phantoms |
+| ---------------- | ----------- | ------------------ | -------- | 
+| Read Uncommitted | Maybe       | Maybe              | Maybe    |
+| Read Committed   | No          | Maybe              | Maybe    |
+| Repeatable Read  | No          | No                 | Maybe    |
+| Serializable     | No          | No                 | No       |
+
+* How to implement these using a locking protocol?
+
+| Isolation level  | Shared Lock        | Predicate Lock     |
+| ---------------- | ------------------ | ------------------ |  
+| Read Uncommitted | No                 | No                 | 
+| Read Committed   | Released early     | No                 |
+| Repeatable Read  | Held to completion | No                 |
+| Serializable     | Held to completion | Held to completion |
+
 # References
+
 * [Introduction to Database System by Shan-Hung Wu](https://www.youtube.com/playlist?list=PLS0SUwlYe8cyln89Srqmmlw42CiCBT6Zn)
