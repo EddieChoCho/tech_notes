@@ -227,6 +227,30 @@
 | Repeatable Read  | Held to completion | No                 |
 | Serializable     | Held to completion | Held to completion |
 
+## Meta-structures
+
+* DBMS maintains some meta-structures in addition to data perceived by users
+    * e.g., FileHeaderPage in RecordFile
+
+* Concurrency Control of Access to Meta-Structures
+    * Access to FileHeaderPage?
+        * Whenever insertions/deletions of records happen
+    * How to lock FileHeaderPage?
+        * S2PL?
+    * S2PL will serialize all insertions and deletions
+        * Hurts performance if we have many inserts/deletes
+
+* Early Lock Release
+    * Actually, lock of FileHeaderPage can be `released early`
+        * No “data” revealed; no hurt to I
+    * Locking steps for a (logical) insertion/deletion:
+        * Acquire locks of FileHeaderPage and target object (RecordPage or a record) in order
+            * Perform changes
+                * `Release` the lock of FileHeaderPage (but not the object)
+    * Better concurrency for I
+    * No harm to C
+    * Needs special care to ensure A and D
+
 # References
 
 * [Introduction to Database System by Shan-Hung Wu](https://www.youtube.com/playlist?list=PLS0SUwlYe8cyln89Srqmmlw42CiCBT6Zn)
