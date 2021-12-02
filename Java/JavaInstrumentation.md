@@ -45,6 +45,59 @@
     //the time of completion for a transaction was added by the Java agent
     ```
 
+## Dynamic Load
+
+* The procedure of loading a Java agent into an already running JVM is called dynamic load. The agent is attached using
+  the [Java Attach API](https://docs.oracle.com/en/java/javase/11/docs/api/jdk.attach/module-summary.html).
+* A more complex scenario is when we already have our application running in production, and we want to add the
+  instrumentation dynamically without downtime for our application.
+* We'll create a AgentLoader class. For simplicity, we'll put this class in the application jar file. So our application
+  jar file can both start our application, and attach our agent to the ATM application:
+  ```
+  VirtualMachine jvm = VirtualMachine.attach(jvmPid);
+  jvm.loadAgent(agentFile.getAbsolutePath());
+  jvm.detach();
+  ```
+* Let's also add the glue that will allow us to either start the application or load the agent. We'll call this class
+  Launcher, and it will be our main jar file class:
+  ```
+  public class Launcher {
+    public static void main(String[] args) throws Exception {
+        if(args[0].equals("StartMyAtmApplication")) {
+            new MyAtmApplication().run(args);
+        } else if(args[0].equals("LoadAgent")) {
+            new AgentLoader().run(args);
+        }
+    }
+  }
+  ```
+
+* Starting the Application
+  ```
+  java -jar application.jar StartMyAtmApplication
+  22:44:21.154 [main] INFO - [Application] Starting ATM application
+  22:44:23.157 [main] INFO - [Application] Successful Withdrawal of [7] units!
+  ```
+
+* Attaching Java Agent
+  * After the first operation, we attach the java agent to our JVM:
+  ```
+  java -jar application.jar LoadAgent
+  22:44:27.022 [main] INFO - Attaching to target JVM with PID: 6575
+  22:44:27.306 [main] INFO - Attached to target JVM and loaded Java agent successfully
+  ```
+
+* Check Application Logs
+  * Now that we attached our agent to the JVM we'll see that we have the instrumentation for the second operation.
+  * This means that we added our functionality on the fly, while our application was running:
+    ```
+    22:44:27.229 [Attach Listener] INFO - [Agent] In agentmain method
+    22:44:27.230 [Attach Listener] INFO - [Agent] Transforming class MyAtm
+    22:44:33.157 [main] INFO - [Application] Successful Withdrawal of [8] units!
+    22:44:33.157 [main] INFO - [Application] Withdrawal operation completed in:2 seconds!
+    ```
+
 ## References
 
 * [Guide to Java Instrumentation](https://www.baeldung.com/java-instrumentation)
+* [Examples](https://github.com/eugenp/tutorials/tree/master/core-java-modules/core-java-jvm/src/main/java/com/baeldung/instrumentation)
