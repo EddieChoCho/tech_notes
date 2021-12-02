@@ -744,15 +744,57 @@ A JPA collection binds a parent entity to a query that usually fetches all the a
         ```
         PostDetails details = entityManager.find(Child.class, parent.getId());
         ```
-        * To optimize the use case, the query cache would be required as well, but the query cache is not without issues either.
+        * To optimize the use case, the query cache would be required as well, but the query cache is not without issues
+          either.
 
 ##### 11.4.2 Bidirectional @OneToOne
-* The parent-side defines a `mappedBy` attribute because the child-side (which can still share the primary key with its parent) is still in charge of this JPA relationship.
+
+* The parent-side defines a `mappedBy` attribute because the child-side (which can still share the primary key with its
+  parent) is still in charge of this JPA relationship.
     * @OneToOne(mappedBy = "fieldName")
 * Even if the association is lazy, when fetching a Post entity, Hibernate fetches the child entity as well.
-* Note: But the lazy association is still workable with the child-side entity. 
-        
-    
-#####
+* Note: But the lazy association is still workable with the child-side entity.
 
 ### 12.Inheritance
+
+* Discriminator column
+
+#### Single table
+
+* Because all subclass properties are collocated in a single table, NOT NULL constraints are not allowed for columns
+  belonging to subclasses.
+* From a data integrity perspective, this limitation defeats the purpose of Consistency (guaranteed by the ACID
+  properties).
+* Nevertheless, the data integrity rules can be enforced through database trigger procedures (a column non-nullability
+  is accounted based on the class discriminator value).
+* Another approach is to move the check into the data access layer.
+    * Bean Validation can validate @NotNull properties at runtime.
+    * JPA also defines callback methods (e.g. @PreUpdate, @PreUpdate) as well as entity listeners(e.g. @EntityListeners)
+      which can throw an exception when a non-null constraint is violated.
+
+#### Join table
+
+* Performance impact with writing data
+    * When writing data, Hibernate requires two insert statements for each subclass entity, so there’s a performance
+      impact compared to single table inheritance.
+    * The index memory footprint also increases because instead of a single table primary key, the database must index
+      the base class and all subclasses primary keys.
+* Performance impact with reading data
+    * When reading data, polymorphic queries require joining the base class with all subclass tables, so, if there are n
+      subclasses, Hibernate will need n + 1 joins.
+    * The more joins, the more difficult it is for the database to calculate the most efficient execution plan.
+
+#### Table-per-class
+
+* While write operations are faster than in the joined table strategy, the read operations are only efficient when
+  querying against the actual subclass entities.
+* Polymorphic queries can have a considerable performance impact because Hibernate must select all subclass tables and
+  use UNION ALL to build the whole inheritance tree result set.
+* The more subclass tables, the least efficient the polymorphic queries will get.
+
+#### Mapped superclass
+
+* Although polymorphic queries and associations are no longer permitted, the @MappedSuperclass yields very efficient
+  read and write operations.
+* Like single and table-per-class inheritance, write operations require a single insert statement and reading only needs
+  to select from one table only.
