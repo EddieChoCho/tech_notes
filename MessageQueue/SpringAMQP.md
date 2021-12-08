@@ -26,26 +26,37 @@
 
 ## AmqpTemplate
 
-### Publishing is Asynchronous — How to Detect Successes and Failures
+### Publishing is Asynchronous — How to Detect Successes and Failures
 
 * Publish to an exchange but there is no matching destination queue.
 	* This is covered by publisher returns, as described in Correlated Publisher Confirms and Returns.
 	
 * Publish to a non-existent exchange.
 	* The message is dropped and no return is generated.
-	* The underlying channel is closed with an exception. By default, this exception is logged, but you can register a ChannelListener with the CachingConnectionFactory to obtain notifications of such events. 
-
+	* The underlying channel is closed with an exception. By default, this exception is logged, but you can register a ChannelListener with the CachingConnectionFactory to obtain notifications of such events.
 
 ## How to Consume Messages?
+
 * Through AMQPTemplate
 * Through @RabbitListener annotation
 * Through MessageListener
 
- ### Configurations
-* PrefetchCount 
+### Configurations
+
+* PrefetchCount
 * ConcurrentConsumers
 
+## RabbitAdmin
+
+* The AMQP specification describes how the protocol can be used to configure queues, exchanges, and bindings on the
+  broker.
+* These operations are present in the AmqpAdmin interface in the org.springframework.amqp.core package. (The
+  implementation of that class is org.springframework.amqp.rabbit.core.RabbitAdmin.)
+* As long as a RabbitAdmin exists in the application context. We can declare collections of exchanges, queues, and
+  bindings.
+
 ## References
+
 * [Spring AMQP](https://docs.spring.io/spring-amqp/docs/current/reference/html)
  
     
