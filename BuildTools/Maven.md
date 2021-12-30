@@ -60,13 +60,15 @@ properties section資料可以在POM檔任意地方被調用
   </dependencies>
 ```
 #### dependency
-1. can define one in `<dependencies>` block, which known as **direct dependencies**
+1. can define one in `<dependencies>` section, which known as **direct dependencies**
 2. dependencies brought by direct dependencies are known as **transitive dependencies**
 3. maven resolves dependencies by locality
     1. direct dependencies found the last wins
     2. transitive dependencies found the first wins
-4. `<dependencyManagement>` block can specify dependency version, doesn't matter if it's a direct or transitive
+4. `<dependencyManagement>` section can specify dependency version, doesn't matter if it's a direct or transitive
    dependency
+5. We can list all dependencies including transitive dependencies in the project using: ```mvn dependency:tree```
+   command.
 
 #### groupId, artifactId, version (Maven Coordinates)
 * groupId, artifactId: directly the corresponding coordinates of the dependency
