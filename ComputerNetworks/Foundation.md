@@ -111,14 +111,50 @@
             │
          [Internet]
     ``` 
-    * Encapsulation: High-level messages are encapsulated inside of low-level messages
+  * Encapsulation: High-level messages are encapsulated inside of low-level messages
+
+* Description of Layers
+  * Physical Layer
+    * Handles the transmission of raw bits over a communication link. e.g.,  Coaxial cable
+
+  * Data Link Layer
+    * Collects a stream of bits into a frame
+    * How to transmit a frame to a directly connected host (destination). e.g., Switches
+
+  * Network Layer
+    * How to transmit frames to a host via the Internet ?
+    * Handles `routing` among nodes within a packet-switched network
+    * Data exchanged between nodes in this layer is called a `packet`
+
+  * Transport Layer
+    * Implements a `process-to-process` channel
+    * Unit of data exchanges in this layer is called a `message`
+    * `TCP (Transmission Control Protocol)` – Reliable service
+    * `UDP (User Datagram Protocol)` – Unreliable service
+
+  * Session Layer
+    * Provides a name space that is used to tie together the potentially different transport streams that are part of a
+      single application
+
+  * Presentation Layer
+    * Concerned about the format of data exchanged between peers
+
+  * Application Layer
+    * Standardize common type of exchanges
+    * FTP/E-mail/DNS/HTTP/Browsers/FB,...
+
+  * `The transport layer and the higher layers typically run only on end-hosts and not on the intermediate switches and routers.`
+* Internet Architecture
+  * `Does not imply strict layering`. The application is `free to bypass` the defined transport layers and to directly
+    use IP or other underlying networks
 
 ## Network Performance
+
 * `Bandwidth`
-    * Width of the frequency band
-    * Number of bits per second that can be transmitted over a communication link
-  
-* 1 Mbps: 1 x 10^6 bits/second 
+  * Width of the frequency band
+  * Number of bits per second that can be transmitted over a communication link
+
+* 1 Mbps: 1 x 10^6 bits/second
 * 1 x 10^-6 seconds to transmit each bit or imagine that a timeline, now each bit occupies 1 micro second space.
 * On a 2 Mbps link the width is 0.5 micro second.
 * Smaller the width more will be transmission per unit time.
