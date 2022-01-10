@@ -188,3 +188,7 @@ public class HelloWorld2 {
 
 * [The logback manual](https://logback.qos.ch/manual/index.html)
 * [Logback News](https://logback.qos.ch/news.html)
+
+# Further Readings
+
+* [logbackRceDemo](https://github.com/cn-panda/logbackRceDemo)
