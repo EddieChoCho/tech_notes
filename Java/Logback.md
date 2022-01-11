@@ -50,6 +50,18 @@ public class HelloWorld2 {
 * In the remainder of this document, we will write "logback" to refer to the logback-classic module.
 
 ### Logger, Appenders and Layouts
+* Logger
+  * A Logger is a context for log messages.
+  * This is the class that applications interact with to create log messages.
+
+* Appender
+  * Appenders place log messages in their final destinations.
+  * A Logger can have more than one Appender.
+
+* Layout
+  * Layout prepares messages for outputting.
+  * Logback supports the creation of custom classes for formatting messages, as well as robust configuration options for
+    the existing ones.
 
 ## Chapter 3: Logback configuration
 
@@ -187,6 +199,7 @@ public class HelloWorld2 {
 # References
 
 * [The logback manual](https://logback.qos.ch/manual/index.html)
+* [A Guide To Logback](https://www.baeldung.com/logback)
 * [Logback News](https://logback.qos.ch/news.html)
 
 # Further Readings
