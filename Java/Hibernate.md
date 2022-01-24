@@ -203,23 +203,119 @@ the actual numbers of queries might be 1 + N.
 
 ## Second Level(SessionFactory Level) Cache[3]
 
-* Whenever hibernate session try to load an entity, the very first place it look for cached copy of entity in first level cache (associated with particular hibernate session).
+* Whenever hibernate session try to load an entity, the very first place it look for cached copy of entity in first
+  level cache (associated with particular hibernate session).
 * If cached copy of entity is present in first level cache, it is returned as result of load method.
 * If there is no cached entity in first level cache, then second level cache is looked up for cached entity.
-* If second level cache has cached entity, it is returned as result of load method. But, before returning the entity, it is stored in first level cache also so that next invocation to load method for entity will return the entity from first level cache itself, and there will not be need to go to second level cache again.
-* If entity is not found in first level cache and second level cache also, then database query is executed and entity is stored in both cache levels, before returning as response of load() method.
-* Second level cache validate itself for modified entities, if modification has been done through hibernate session APIs.
-* If some user or process make changes directly in database, the there is no way that second level cache update itself until “timeToLiveSeconds” duration has passed for that cache region. In this case, it is good idea to invalidate whole cache and let hibernate build its cache once again. You can use below code snippet to invalidate whole hibernate second level cache.
+* If second level cache has cached entity, it is returned as result of load method. But, before returning the entity, it
+  is stored in first level cache also so that next invocation to load method for entity will return the entity from
+  first level cache itself, and there will not be need to go to second level cache again.
+* If entity is not found in first level cache and second level cache also, then database query is executed and entity is
+  stored in both cache levels, before returning as response of load() method.
+* Second level cache validate itself for modified entities, if modification has been done through hibernate session
+  APIs.
+* If some user or process make changes directly in database, the there is no way that second level cache update itself
+  until “timeToLiveSeconds” duration has passed for that cache region. In this case, it is good idea to invalidate whole
+  cache and let hibernate build its cache once again. You can use below code snippet to invalidate whole hibernate
+  second level cache.
+
+## Entity
+
+### Natural Ids
+
+* Natural ids are defined in terms of one or more persistent attributes. (e.g., basic, embedded, and multiple persistent
+  attributes)
+* Natural Id API: It is represented by the `org.hibernate.NaturalIdLoadAccess` contract obtained
+  via `Session#byNaturalId`.
+    ```java
+    Course course = session.byNaturalId( Course.class )
+    .using( "department", department )
+    .using( "code", "101" )
+    .load();
+    ```
+    * NaturalIdLoadAccess offers 2 distinct methods for obtaining the entity:
+        * load/loadOptional - obtains a reference to the entity, making sure that the entity state is initialized.
+        * getReference - obtains a reference to the entity. The state may or may not be initialized.
+            * If the entity is associated with the Session already, that reference (loaded or not) is returned;
+            * Else if the entity supports proxy generation, an uninitialized proxy is generated and returned;
+            * Otherwise, the entity is loaded from the database and returned.
+    * Native SQL queries performed by Hibernate(load method)
+        * 2 queries will be performed:
+            1. Fetch the pk of the entity by its natural ids
+            2. Fetch all the attributes of the entity by its pk.
+        * The reason for this approach is most likely that Hibernate needs the primary key value internally to check the
+          1st and 2nd level cache.
+        * In most cases, this additional query should not have a huge impact on the performance.
+
+* NaturalIdLoadAccess also allows to request locking for the load. We might use that to load an entity by natural id and
+  at the same time apply a pessimistic lock.
+    * ...TBD
+
+* If the natural ids are defined based on just one attribute. We can use `Session#bySimpleNaturalId`.
+  ```java
+    Company company = session.bySimpleNaturalId( Company.class )
+        .load( "abc-123-xyz" );
+    //Company company = session.byNaturalId( Company.class )
+    //	.using( "taxIdentifier", "abc-123-xyz" )
+    //	.load();
+  ```
+
+#### Natural Id - Mutability and Caching
+
+* A natural id may be mutable or immutable. By default @NaturalId marks an immutable natural id.
+* Within the Session, Hibernate maintains a mapping from natural id values to pk values. (We can also have it cached in
+  the second-level cache if second level caching is enabled.)
+* For mutable natural ids:
+    * If natural ids values have changed it is possible for this mapping to become out of date until a flush occurs.
+    * To work around this condition, Hibernate will attempt to discover any such pending changes and adjust for them
+      when the load or getReference method is executed.
+    * This "discovery and adjustment" have a performance impact.
+        * If an application is certain that none of its mutable natural ids already associated with the Session have
+          changed, it can disable that checking by calling setSynchronizationEnabled(false) (the default is true).
+        * This will force Hibernate to circumvent the checking of mutable natural ids.
+
+```java
+Session session=...;
+
+        Person person=session.bySimpleNaturalId(Person.class )
+        .load("123-45-6789");
+        person.setSsn("987-65-4321");
+
+        ...
+
+// returns null!
+        person=session.bySimpleNaturalId(Person.class )
+        .setSynchronizationEnabled(false)
+        .load("987-65-4321");
+
+// returns correctly!
+        person=session.bySimpleNaturalId(Person.class )
+        .setSynchronizationEnabled(true)
+        .load("987-65-4321");
+```
+
+### References
+
+* [Hibernate - Natural Ids](https://docs.jboss.org/hibernate/orm/5.0/mappingGuide/en-US/html/ch07.html)
+* [@NaturalId – A good way to persist natural IDs with Hibernate?](https://thorben-janssen.com/naturalid-good-way-persist-natural-ids-hibernate/)
 
 ## How to fetch multiple entities by id with Hibernate 5
+
 ### How to access the Hibernate Session from JPA
+
 You can call the unwrap() method of the EntityManger to get a Hibernate Session.
+
 ```
 Session session = em.unwrap(Session.class);
 ```
+
 ### Load multiple entities by their primary key
-* Get a typed instance of the MultiIdentifierLoadAccess interface by calling the byMultipleIds(Class entityClass) method on the Hibernate Session.
-* Then called the multiLoad(K… ids) method. Hibernate creates one query for this method call and provides the multiple primary keys as parameters to an IN statement.
+
+* Get a typed instance of the MultiIdentifierLoadAccess interface by calling the byMultipleIds(Class entityClass) method
+  on the Hibernate Session.
+* Then called the multiLoad(K… ids) method. Hibernate creates one query for this method call and provides the multiple
+  primary keys as parameters to an IN statement.
+
 ### Load entities in multiple batches
 * There are different reasons to apply batching to these kinds of queries:
     * Not all databases allow an unlimited number of parameters in IN statements.
