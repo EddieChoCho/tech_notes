@@ -47,6 +47,7 @@
 * [Caching Tutorial](http://www.mnot.net/cache_docs/)
 * [Nginx ngx_http_gzip_module module](http://nginx.org/en/docs/http/ngx_http_gzip_module.html)
 * [BREACH attack0](https://en.wikipedia.org/wiki/BREACH)
+* [Principles & Best practices of REST API Design](https://blog.devgenius.io/best-practice-and-cheat-sheet-for-rest-api-design-6a6e12dfa89f)
 
 ## References
 * [Intro to REST - Google Developers](https://youtu.be/YCcAE2SCQ6k)
