@@ -2,12 +2,13 @@
  
 ## Thread Introduction
 * Threads
-	* A.k.a lightweight process: basic unit of CPU utilization
+	* Aka lightweight process: basic unit of CPU utilization
 	* All threads belonging to the same process share: code section, data section, and OS resources(e.g. open files)
 	* But each thread has it own(thread control block): thread ID, program counter, register set, and a stack
 
-* Multithcore Programming
-	* Multithreaded programming provides a mechanism for `more-efficient use of multiple cores` and `improved concurrency`(threads can run in parallel)
+* Multicore Programming
+	* Multithreaded programming provides a mechanism for `more-efficient use of multiple cores`
+	  and `improved concurrency`(threads can run in parallel)
 	* Multicore system putting pressure on `system designers` and `application programmers`
 		* OS designer: scheduling algorithms use cores to allow the parallel execution
 
@@ -93,7 +94,8 @@
 	* If exec() is called immediately after forking, then duplicating all threads is unnecessary
 
 ### Thread Cancellation
-* What happen if a thread determinates before it has complete(e.g. terminate web page loading)
+
+* What happen if a thread determines before it has complete(e.g. terminate web page loading)
 * Target thread: a thread that is to be cancelled
 * Two general approaches
 	* `Asynchronous cancellation`
@@ -118,8 +120,9 @@
 	* Assign a specific thread to receive all signals for the process
 
 ### Thread Pools
+
 * Create a number of threads in a pool where they await work
-* Adventages
+* Advantages
 	* Usually slightly `faster to service a request` with an existing thread `than create a new thread`
 	* Allows the number of threads in the application(s) to be `bound to the size of the pool`
 * `# of threads:` # of CPUs, expected # of requests, amount of physical memory
