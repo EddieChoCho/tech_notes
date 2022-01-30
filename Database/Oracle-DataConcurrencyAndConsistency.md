@@ -92,22 +92,99 @@
 | Repeatable read  | Not possible | Not possible       | Possible     |
 | Serializable     | Not possible | Not possible       | Not possible |
 
-### Overview of Locking Mechanisms
+### Overview of the Oracle Database Locking Mechanism
 
 * Locks are mechanisms that prevent destructive interaction between transactions accessing the same resource.
 * Resources include two general types of objects:
   * User objects, such as tables and rows (structures and data)
   * System objects not visible to users, such as shared data structures in the memory and data dictionary rows
 
-## How Oracle Manages Data Concurrency and Consistency
+#### Summary of Locking Behavior
 
-### Multiversion Concurrency Control
+* In general, the database uses two types of locks: exclusive locks and share locks.
+* Locks affect the interaction of readers and writers.
+  * A reader is a query of a resource.
+  * A writer is a statement modifying a resource.
+* The following rules summarize the locking behavior of Oracle Database for readers and writers:
+  * A row is locked only when modified by a writer.
+    * Note: Under normal circumstances, the database does not escalate a row lock to the block or table level.
+  * A writer of a row blocks a concurrent writer of the same row.
+  * A reader never blocks a writer.
+    * Note: The only exception is a SELECT ... FOR UPDATE statement, which is a special type of SELECT statement that
+      does lock the row that it is reading.
+    * Note:Readers of data may have to wait for writers of the same data blocks in very special cases of pending
+      distributed transactions.
+  * A writer never blocks a reader.
+    * When a row is being changed by a writer, the database uses undo data to provide readers with a consistent view of
+      the row.
 
-###  
+#### Use of Locks
 
-## How Oracle Locks Data
+* Locks achieve the following important database requirements:
+  * Consistency: The data a session is viewing or changing must not be changed by other sessions until the user is
+    finished.
+  * Integrity: The data and structures must reflect all changes made to them in the correct sequence.
+* Because the locking mechanisms of Oracle Database are tied closely to transaction control, application designers need
+  only define transactions properly, and Oracle Database automatically manages locking.
+* Users never need to lock any resource explicitly.
 
-## Overview of Oracle Flashback Query
+#### Lock Modes
+
+* Oracle Database
+  automatically `uses the lowest applicable level of restrictiveness to provide the highest degree of data concurrency yet also provide fail-safe data integrity`
+  .
+* Oracle Database uses two modes of locking in a multiuser database: Exclusive lock mode, Share lock mode
+* Assume that a transaction uses a ```SELECT ... FOR UPDATE``` statement to select a single table row. The transaction
+  acquires an exclusive row lock and a row share table lock.
+  * The row lock allows other sessions to modify any rows other than the locked row.
+  * The table lock prevents sessions from altering the structure of the table.
+  * Thus, the database permits as many statements as possible to execute.
+
+#### Lock Conversion and Escalation
+
+* Lock Conversion
+  * In lock conversion, the database automatically converts a table lock of lower restrictiveness to one of higher
+    restrictiveness.
+  * `Oracle Database performs lock conversion as necessary.`
+    * For example, suppose a transaction issues a ```SELECT ... FOR UPDATE``` for an employee and later updates the
+      locked row.
+      * In this case, the database automatically converts the row share table lock to a row exclusive table lock.
+      * Because row locks are acquired at the highest degree of restrictiveness, no lock conversion is required or
+        performed.
+
+* Lock Escalation
+  * Lock escalation occurs when numerous locks are held at one level of granularity (for example, rows) and a database
+    raises the locks to a higher level of granularity (for example, table).
+  * If a session locks many rows in a table, then some databases automatically escalate the row locks to a single table.
+  * The number of locks decreases, but the restrictiveness of what is locked increases.
+  * `Oracle Database never escalates locks.`
+    * Lock escalation greatly increases the probability of deadlocks.
+    * Assume that a system is trying to escalate locks on behalf of transaction 1 but cannot because of the locks held
+      by transaction 2. A deadlock is created if transaction 2 also requires lock escalation of the same data before it
+      can proceed.
+
+#### Lock Duration
+
+* `Oracle Database automatically releases a lock when some event occurs so that the transaction no longer requires the resource`
+  .
+* Usually, the database holds locks acquired by statements within a transaction for the duration of the transaction.
+  * Note:
+    * A table lock taken on a child table because of an unindexed foreign key is held for the duration of the statement,
+      not the transaction.
+    * Also, the DBMS_LOCK package enables user-defined locks to be released and allocated at will and even held over
+      transaction boundaries.
+
+#### Locks and Deadlocks
+
+* Oracle Database automatically detects deadlocks and resolves them by rolling back one statement involved in the
+  deadlock, releasing one set of the conflicting row locks.
+  * The database returns a corresponding message to the transaction that undergoes `statement-level rollback`.
+  * The statement rolled back belongs to the transaction that detects the deadlock. Usually, the signaled transaction
+    should be rolled back explicitly, but it can retry the rolled-back statement after waiting.
+
+* Deadlocks most often occur when transactions explicitly override the default locking of Oracle Database.
+* Because Oracle Database does not escalate locks and does not use read locks for queries, but does use row-level (
+  rather than page-level) locking, deadlocks occur infrequently.
 
 ## References
 
