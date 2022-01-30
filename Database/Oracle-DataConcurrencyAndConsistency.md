@@ -40,6 +40,42 @@
     * The SELECT statement explicitly specifies the point in time.
     * For example, you can query a table as it appeared last Thursday at 2 p.m.
 
+#### Transaction-Level Read Consistency
+
+* Oracle Database can also provide read consistency to all queries in a transaction, known as transaction-level read
+  consistency.
+* In this case, each statement in a transaction sees data from the same point in time. This is the time at which the
+  transaction began.
+* Transaction-level read consistency produces repeatable reads and does not expose a query to phantom reads.
+
+#### Read Consistency and Undo Segments
+
+* To manage the multiversion read consistency model, the database must create a read-consistent set of data when a table
+  is simultaneously queried and updated.
+* Oracle Database achieves read consistency through undo data.
+  * Undo data
+    * Records of the actions of transactions, primarily before they are committed.
+    * The database can use undo data to logically reverse the effect of SQL statements.
+    * Undo data is stored in undo segments.
+* Whenever a user modifies data, Oracle Database creates undo entries, which it writes to undo segments.
+* The undo segments contain the old values of data that have been changed by uncommitted or recently committed
+  transactions. Thus, multiple versions of the same data, all at different points in time, can exist in the database.
+* The database can use snapshots of data at different points in time to provide read-consistent views of the data and
+  enable nonblocking queries.
+
+* Oracle Real Application Clusters (Oracle RAC)
+  * Read consistency is also guaranteed in Oracle RAC environments.
+  * Oracle RAC uses a cache-to-cache block transfer mechanism known as cache fusion to transfer read-consistent images
+    of data blocks from one database instance to another.
+
+##### Read Consistency: Example
+
+* TBD
+
+##### Read Consistency and Interested Transaction Lists
+
+* TBD
+
 ### Preventable Phenomena and Transaction Isolation Levels
 
 * The three preventable phenomena are:
