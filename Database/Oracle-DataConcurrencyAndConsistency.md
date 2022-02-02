@@ -186,6 +186,61 @@
 * Because Oracle Database does not escalate locks and does not use read locks for queries, but does use row-level (
   rather than page-level) locking, deadlocks occur infrequently.
 
+### Overview of Automatic Locks
+
+#### DML Locks
+
+* A DML lock, also called a data lock, guarantees the integrity of data accessed concurrently by multiple users.
+* DML statements automatically acquire the following types of locks:
+  * Row Locks (TX)
+    * A transaction acquires a row lock for each row modified by an INSERT, UPDATE, DELETE, MERGE, or SELECT ... FOR
+      UPDATE statement.
+      * Note: If a transaction terminates because of database instance failure, then block-level recovery makes a row
+        available before the entire transaction is recovered.
+    * If a transaction obtains a lock for a row(e.g., exclusive lock ), then the transaction also acquires a lock for
+      the table containing the row(sub-exclusive lock).
+    * Storage of Row Locks
+      * Unlike some databases, which use a lock manager to maintain a list of locks in memory, Oracle Database stores
+        lock information in the data block that contains the locked row.
+      * The database uses a queuing mechanism for acquisition of row locks. If a transaction requires a lock for an
+        unlocked row, then the transaction places a lock in the data block.
+      * Each row modified by this transaction points to a copy of the transaction ID stored in the block header.
+      * When a transaction ends, the transaction ID remains in the block header. If a different transaction wants to
+        modify a row, then it uses the transaction ID to determine whether the lock is active.
+      * If the lock is active, then the session asks to be notified when the lock is released. Otherwise, the
+        transaction acquires the lock.
+
+  * Table Locks (TM)
+    * A TM lock is acquired by a transaction when a table is modified by an INSERT, UPDATE, DELETE, MERGE, SELECT with
+      the FOR UPDATE clause, or LOCK TABLE statement.
+    * DML operations require table locks to reserve DML accesses to the table on behalf of a transaction and to prevent
+      DDL operations that would conflict with the transaction.
+    * A table lock can be held in any of the following modes: Row Share (RS), Row Exclusive Table Lock (RX), Share Table
+      Lock (S), hare Row Exclusive Table Lock (SRX), and Exclusive Table Lock (X).
+
+* Locks and Foreign Keys
+  * Locking behavior depends on whether foreign key columns are indexed.
+  * If foreign keys are not indexed, then the child table will probably be locked more frequently, deadlocks will occur,
+    and concurrency will be decreased.
+  * For this reason foreign keys should almost always be indexed.
+  * The only exception is when the matching unique or primary key is never updated or deleted.
+
+  * Locks and Unindexed Foreign Keys
+    * The database acquires a full table lock on the child table when no index exists on the foreign key column of the
+      child table, and a session modifies a primary key in the parent table (for example, deletes a row or modifies
+      primary key attributes) or merges rows into the parent table.
+    * When both of the following conditions are true, the database acquires a full table lock on the child table:
+      * No index exists on the foreign key column of the child table.
+      * A session modifies a primary key in the parent table (for example, deletes a row or modifies primary key
+        attributes) or merges rows into the parent table.
+
+  * Locks and Indexed Foreign Keys
+    * TBD
+
+#### DDL Locks
+
+#### System Locks
+
 ## References
 
 * [11 Data Concurrency and Consistency](https://docs.oracle.com/en/database/oracle/oracle-database/21/cncpt/data-concurrency-and-consistency.html)
