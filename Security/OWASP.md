@@ -38,24 +38,76 @@
 * External entities can be used to disclose internal files using the file URI handler, internal file shares, internal port scanning, remote code execution, and denial of service attacks.
 ### Attack Attempts
 * Billion Laughs
+
 ### Solutions
+
 * Config XML parser properly. Disable XXE completely if you can.
 * Input validation
-* Source code analysis tool 
+* Source code analysis tool
 * Dynamic application security testing
 
 ## Broken Access Control
-* Restrictions on what authenticated users are allowed to do are often not properly enforced. 
-* Attackers can exploit these flaws to access unauthorized functionality and/or data, such as access other users’ accounts, view sensitive files, modify other users’ data, change access rights, etc.
+
+* Restrictions on what authenticated users are allowed to do are often not properly enforced.
+* Attackers can exploit these flaws to access unauthorized functionality and/or data, such as access other users’
+  accounts, view sensitive files, modify other users’ data, change access rights, etc.
+
+#### Access Control Challenges
+
+* `Access Control is difficult to test from automated tools`. Your scanning tools are rarely aware of your custom access
+  control policies.
+* Access Control is difficult for developers to build. Our frameworks rarely provide detailed access control
+  functionality.
+
+#### Best Practice: Code to the Activity (or Permission)
+
+* Code it once, never needs to change again
+* Implies policy is centralized in some way
+* Implies policy is persisted in some way
+* Requires more design/work up front to get right
+
+#### Access Control Key Concepts
+
+* Enforce access control by an activity or feature, not the role
+* Implement data-contextual access control to assign permissions to application users in the context of specific data
+  items for horizontal access control requirements
+* Build a centralized access control mechanism
+* Design access control so all requests must be authorized
+* Deny by default, fail securely
+* Server-side trusted data should drive access control policy decisions
+* Be able to change a users entitlements in real time
+* Build grouping capability for users and permissions
+* Build admin screens first to manage access control policy data
+
+### CAUTION
+
+* Good access control is `hard to add to an application late in the lifecycle`.
+
+### VERIFY
+
+* Automated security tools are poor at verifying access control vulnerabilities since tools are not aware of your access
+  control policy
+
+### GUIDANCE
+
+* https://cheatsheetseries.owasp.org/cheatsheets/Authorization_Cheat_Sheet.html
+* http://nvlpubs.nist.gov/nistpubs/specialpublications/NIST.sp.800-162.pdf
+* https://github.com/OWASP/ASVS/blob/master/4.0/en/0x12-V4-Access-Control.md
+
 ### Solutions
+
 * Dynamic application security testing tools
 * Static application security testing tools/source code analysis tool
 * Manual testing
 * Only give minimal access for that one thing for the minimum amount of time.
 
-## Security Misconfiguration 
-* Security misconfiguration is the most commonly seen issue. This is commonly a result of insecure default configurations, incomplete or ad hoc configurations, open cloud storage, misconfigured HTTP headers, and verbose error messages containing sensitive information. 
-* Not only must all operating systems, frameworks, libraries, and applications be securely configured, but they must be patched/upgraded in a timely fashion.
+## Security Misconfiguration
+
+* Security misconfiguration is the most commonly seen issue. This is commonly a result of insecure default
+  configurations, incomplete or ad hoc configurations, open cloud storage, misconfigured HTTP headers, and verbose error
+  messages containing sensitive information.
+* Not only must all operating systems, frameworks, libraries, and applications be securely configured, but they must be
+  patched/upgraded in a timely fashion.
 ### Solutions
 * Repeatable hardening process: test these process with automation tools.  
 * All servers - same config
@@ -100,6 +152,7 @@
 * [OWASP Top Ten](https://owasp.org/www-project-top-ten/)
 * [OWASP Top Ten - 2017](https://www.youtube.com/playlist?list=PLyqga7AXMtPPuibxp1N0TdyDrKwP9H_jD)
 * [SSL](https://youtu.be/33VYnE7Bzpk)
+* [Jim Manico - OWASP Top Ten 2021](https://youtu.be/pLsH-TT26Mo)
 
 
 
