@@ -460,6 +460,116 @@
 * Catching JMSException and JMSRuntimeException provides a generic way of handling all exceptions related to the JMS
   API.
 
+### 45.4 Using Advanced JMS Features
+
+* Feature: every message be received once and only once.
+* The most reliable way to produce a message is to send a PERSISTENT message, and to do so within a transaction.
+* The most reliable way to consume a message is to do so within a transaction, either from a queue or from a durable
+  subscription to a topic.
+* PERSISTENT message
+    * JMS messages are PERSISTENT by default; PERSISTENT messages will not be lost in the event of JMS provider failure.
+* Transactions
+    * A transaction is a unit of work into which you can group a series of operations, such as message sends and
+      receives, so that the operations either all succeed or all fail.
+* Some features primarily allow an application to improve performance. e.g.,
+    * Message TTL, so that consumers do not receive unnecessary outdated information.
+    * You can send messages asynchronously.
+
+#### 45.4.1 Controlling Message Acknowledgment
+
+* Until a JMS message has been acknowledged, it is not considered to be successfully consumed.
+* The successful consumption of a message ordinarily takes place in three stages:
+    * The client receives the message.
+    * The client processes the message.
+    * The message is acknowledged. Acknowledgment is initiated either by the JMS provider or by the client, depending on
+      the session acknowledgment mode.
+
+* In locally transacted sessions:
+    * A message is acknowledged when the session is committed.
+    * If a transaction is rolled back, all consumed messages are redelivered.
+
+* In a JTA transaction:
+    * A message is acknowledged when the transaction is committed.
+
+* In non-transacted sessions, when and how a message is acknowledged depend on a value that may be specified as an
+  argument of the createContext method:
+    * JMSContext.AUTO_ACKNOWLEDGE
+        * This setting is the default for application clients and Java SE clients.
+        * The JMSContext automatically acknowledges a client's receipt of a message when:
+            * The client has successfully returned from a call to receive.
+            * Or the MessageListener it has called to process the message returns successfully.
+
+        * A synchronous receive in a JMSContext that is configured to use auto-acknowledgment.
+            * It is the one exception to the rule that message consumption is a three-stage process as described
+              earlier.
+            * In this case, the receipt and acknowledgment take place in one step, followed by the processing of the
+              message.
+
+    * JMSContext.CLIENT_ACKNOWLEDGE
+        * A client acknowledges a message by calling the message's acknowledge method.
+        * In this mode, acknowledgment takes place on the session level:
+            * Acknowledging a consumed message automatically acknowledges the receipt of all messages that have been
+              consumed by its session.
+            * e.g., If a message consumer consumes ten messages and then acknowledges the fifth message delivered, all
+              ten messages are acknowledged.
+
+        * Note: In the Java EE platform, the JMSContext.CLIENT_ACKNOWLEDGE setting can be used only in an application
+          client, not in a web component or enterprise bean.
+
+    * JMSContext.DUPS_OK_ACKNOWLEDGE
+        * This option instructs the JMSContext to lazily acknowledge the delivery of messages.
+        * This is likely to `result in the delivery of some duplicate messages if the JMS provider fails`, so it should
+          be used only by consumers that can `tolerate duplicate messages`.
+            * If the JMS provider redelivers a message, it must set the value of the JMSRedelivered message header to
+              true.
+        * This option can reduce session overhead by minimizing the work the session does to prevent duplicates.
+
+#### 45.4.2 Specifying Options for Sending Messages
+
+* You can set a number of options when you send a message. These options enable you to perform the following tasks:
+    * Specify that messages are persistent: meaning they must not be lost in the event of a provider failure.
+    * Set priority levels for messages: which can affect the order in which the messages are delivered.
+    * Specify an expiration time for messages: so they will not be delivered if they are obsolete.
+    * Specify a delivery delay for messages: so that they will not be delivered until a specified amount of time has
+      expired.
+
+##### 45.4.2.1 Specifying Message Persistence
+
+* The JMS API supports two delivery modes specifying whether messages are lost if the JMS provider fails:
+    * PERSISTENT
+        * Default mode,It instructs the JMS provider to take extra care to ensure that a message is not lost in transit
+          in case of a JMS provider failure.
+        * A message sent with this delivery mode is logged to stable storage when it is sent.
+
+    * NON_PERSISTENT
+
+##### 45.4.2.2 Setting Message Priority Levels
+
+* The ten levels of priority range from 0 (lowest) to 9 (highest).
+* If you do not specify a priority level, the default level is 4.
+* A JMS provider tries to deliver higher-priority messages before lower-priority ones, but does not have to deliver
+  messages in exact order of priority.
+
+##### 45.4.2.3 Allowing Messages to Expire
+
+* By default, a message never expires.
+* If a message can become obsolete after a certain period(e.g., a message that contains rapidly changing data such as a
+  stock price), however, you may want to set an expiration time.
+* Use the setTimeToLive method of the JMSProducer interface to set a default expiration time for all messages sent by
+  that producer.
+    ```
+        context.createProducer().setTimeToLive(300000).send(dest, msg);
+    ```
+* Any message not delivered before the specified expiration time is destroyed.
+* The destruction of obsolete messages conserves storage and computing resources.
+
+##### 45.4.2.4 Specifying a Delivery Delay
+
+* You can use method chaining to set the delivery delay when you create a producer and send a message.
+    ```
+        context.createProducer().setDeliveryDelay(3000).send(dest, msg);
+    ```
+
 ## References
 
 * [Oracle's Java EE 7 JMS tutorial](https://docs.oracle.com/javaee/7/tutorial/partmessaging.htm)
