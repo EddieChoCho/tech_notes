@@ -91,6 +91,57 @@
             COMMIT;
             ```
 
+* 3.5. Window Functions
+    * Window functions do not cause rows to become grouped into a single output row like non-window aggregate calls
+      would. Instead, the rows retain their separate identities.
+    * A window function call always contains an `OVER` clause directly following the window function's name and
+      argument(s).
+        * e.g., ```SELECT depname, empno, salary, avg(salary) OVER (PARTITION BY depname) FROM empsalary;```
+            * The `OVER` clause determines exactly how the rows of the query are split up for processing by the window
+              function.
+            * The `PARTITION BY` clause within `OVER` divides the rows into groups, or partitions, that share the same
+              values of the PARTITION BY expression(s).
+                * For each row, the window function is computed across the rows that fall into the same partition as the
+                  current row.
+
+    * Using `ORDER BY` within `OVER` of window functions
+        * The window `ORDER BY` does not even have to match the order in which the rows are output.
+        * e.g.,
+          ```sql
+              SELECT depname, empno, salary,
+              rank() OVER (PARTITION BY depname ORDER BY salary DESC)
+              FROM empsalary;
+          ```
+            * As shown here, the rank function produces a numerical rank for each distinct` ORDER BY` value in the
+              current row's partition, using the order defined by the `ORDER BY` clause. rank needs no explicit
+              parameter, because its behavior is entirely determined by the `OVER` clause.
+    * Window frame.
+        * For each row, there is a set of rows within its partition called its window frame.
+        * Some window functions act only on the rows of the window frame, rather than of the whole partition.
+        * By default, if `ORDER BY` is supplied then the frame consists of all rows from the start of the partition up
+          through the current row, plus any following rows that are equal to the current row according to the `ORDER BY`
+          clause.
+        * When `ORDER BY` is omitted the default frame consists of all rows in the partition.
+        * e.g.,
+          ```sql
+          SELECT salary, sum(salary) OVER () FROM empsalary;
+          -- sum is taken over the whole table and so we get the same result for each output row.
+          
+          SELECT salary, sum(salary) OVER (ORDER BY salary) FROM empsalary;
+          -- sum is taken from the first (lowest) salary up through the current one
+          ```
+    * `WINDOW` clause
+        * When a query involves multiple window functions, it is possible to write out each one with a separate OVER
+          clause, but this is duplicative and error-prone if the same windowing behavior is wanted for several
+          functions.
+        * Instead, each windowing behavior can be named in a WINDOW clause and then referenced in OVER.
+        * e.g.,
+          ```sql
+            SELECT sum(salary) OVER w, avg(salary) OVER w 
+            FROM empsalary
+            WINDOW w AS (PARTITION BY depname ORDER BY salary DESC);
+          ```
+
 ## The Information Schema
 
 * List all the created view
