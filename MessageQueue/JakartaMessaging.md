@@ -570,6 +570,21 @@
         context.createProducer().setDeliveryDelay(3000).send(dest, msg);
     ```
 
+#### 45.4.5 Sending Messages Asynchronously
+
+* Sending a message asynchronously involves supplying a callback object. You specify a CompletionListener with an
+  onCompletion method.
+* The CompletionListener class must implement two methods, onCompletion and onException. The onCompletion method is
+  called if the `send` succeeds, and the onException method is called if it fails.
+
+### 45.5 Using the JMS API in Java EE Applications
+
+* Application components in the web and EJB containers must not attempt to create more than one active (not closed)
+  Session object per connection.
+* Multiple JMSContext objects are permitted, however, since they combine a single connection and a single session.
+* This rule does not apply to application clients. The application client container supports the creation of multiple
+  sessions for each connection.
+
 ## References
 
 * [Oracle's Java EE 7 JMS tutorial](https://docs.oracle.com/javaee/7/tutorial/partmessaging.htm)
