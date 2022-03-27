@@ -141,6 +141,37 @@
             FROM empsalary
             WINDOW w AS (PARTITION BY depname ORDER BY salary DESC);
           ```
+* 3.6. Inheritance
+    * Without inheritance
+      ```sql
+          CREATE VIEW cities AS
+          SELECT name, population, elevation FROM capitals
+          UNION
+          SELECT name, population, elevation FROM non_capitals;
+      ```
+    * With inheritance
+      ```sql
+          CREATE TABLE cities (
+           name       text,
+           population real,
+           elevation  int     -- (in ft)
+         );
+      
+         CREATE TABLE capitals (
+           state      char(2) UNIQUE NOT NULL
+         ) INHERITS (cities);
+      
+         SELECT name, elevation FROM cities WHERE elevation > 500;
+          -- result of the select statement will also include capitals.  
+      ```
+        * `ONLY` notation.
+      ```sql
+         SELECT name, elevation FROM ONLY cities;
+         --  finds all the cities that are not state capitals and are situated 
+      ```
+        * Note
+            * Although inheritance is frequently useful, it has not been integrated with unique constraints or foreign
+              keys, which limits its usefulness.
 
 ## The Information Schema
 
