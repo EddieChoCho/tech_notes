@@ -173,6 +173,36 @@
             * Although inheritance is frequently useful, it has not been integrated with unique constraints or foreign
               keys, which limits its usefulness.
 
+# Chapter 4. SQL Syntax
+
+* 4.1. Lexical Structure
+    * 4.1.2. Constants
+
+* 4.2. Value Expressions
+    * 4.2.1. Column References e.g., ```correlation.columnname```
+    * 4.2.2. Positional Parameters ($number)
+      ```CREATE FUNCTION dept(text) RETURNS dept AS $$ SELECT * FROM dept WHERE name = $1 $$ LANGUAGE SQL;```
+    * 4.2.3. Subscripts
+        * If an expression yields a value of an array type, then a specific element of the array value can be extracted
+          by writing ```expression[subscript]```
+        * Multiple adjacent elements (an “array slice”) can be extracted by
+          writing ```expression[lower_subscript:upper_subscript]```
+        * e.g.,
+          ```sql 
+             mytable.arraycolumn[4]
+             mytable.two_d_column[17][34]
+             $1[10:42]
+             (arrayfunction(a,b))[42]
+          ```
+    * 4.2.5. Operator Invocations
+        * There are two possible syntaxes for an operator
+          invocation: `expression operator expression (binary infix operator)`
+          , `operator expression (unary prefix operator)`
+    * 4.2.6. Function Calls
+      ```sql
+        function_name ([expression [, expression ... ]] )
+      ```
+
 ## The Information Schema
 
 * List all the created view
