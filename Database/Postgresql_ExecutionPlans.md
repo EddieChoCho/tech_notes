@@ -138,6 +138,27 @@
 
 * Indicates the use of window functions.
 
+## 3. Distinguishing Access and Filter-Predicates
+
+* The PostgreSQL database uses three different methods to apply where clauses (predicates)
+* PostgreSQL execution plans do not show index access and filter predicates separately—both show up as “Index Cond”.
+    * That means the execution plan must be compared to the index definition to differentiate access predicates from
+      index filter predicates.
+
+#### Access Predicate (“Index Cond”)
+
+* The access predicates express the start and stop conditions of the leaf node traversal.
+
+#### Index Filter Predicate (“Index Cond”)
+
+* Index filter predicates are applied during the leaf node traversal only.
+* They do not contribute to the start and stop conditions and do not narrow the scanned range.
+
+#### Table level filter predicate (“Filter”)
+
+* Predicates on columns that are not part of the index are evaluated on the table level.
+* For that to happen, the database must load the row from the heap table first.
+
 ## References
 
 * [Postgresql - Chapter 14. Performance Tips](https://www.postgresql.org/docs/14/performance-tips.html)
