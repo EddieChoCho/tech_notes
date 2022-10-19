@@ -186,6 +186,10 @@
     * T1 only share locks the records with the age equals to 10
     * The record with id=7 is not in the locking item set of T1, so T2 can update this record
 
+* dirty: single data
+* phantoms: multiple data in single table
+* skew: multiple data in multiple table
+
 #### How to Prevent Phantoms?
 
 * EOF locks or multi-granularity locks
