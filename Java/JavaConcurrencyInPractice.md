@@ -1,6 +1,6 @@
 # Java Concurrency In Practice 
 ## The introduction 
-### Chapter 1:
+### Chapter 1: Introduction
 #### Benefits of Threads
 * Exploiting Multiple Processors
 * Simplicity of Modeling
@@ -8,6 +8,8 @@
 * More Responsive User Interfaces
 
 #### Safety Hazards
+
+* e.g., race-condition
 #### Liveness Hazards
 * A liveness failure occurs when an activity gets into a state such that it is permanently unable to make forward progress. (e.g. inadvertent infinite loop)
 * Chapter 10 describes various forms of liveness failures and how to avoid them, 
@@ -15,24 +17,56 @@
 	* starvation (Section 10.3.1), 
 	* livelock (Section 10.3.3). 
 #### Performance Hazards
+
+* e.g., context-switch
+
 ## Part I - Fundamentals: 
 ### Chapter 2. Thread Safety
+
+* This chapter is about writing correct concurrent programs is primarily about managing access to shared, mutable state.
+
+* If multiple threads access the same mutable state variable without appropriate synchronization, your program is
+  broken. There are three ways to fix it:
+    * Don't share the state variable across threads;
+    * Make the state variable immutable; or
+    * Use synchronization whenever accessing the state variable
+
 #### 2.1 What is thread-safe?
-* A class is thread-safe if it behaves correctly when accessed from multiple threads, regardless of the scheduling or interleaving of the execution of those threads by the runtime ebvironment, and with no additional synchronization or other coordination on the part of the calling code.
+
+* https://courses.engr.illinois.edu/cs225/fa2022/resources/stack-heap/
+
+* A class is thread-safe if it behaves correctly when accessed from multiple threads, regardless of the scheduling or
+  interleaving of the execution of those threads by the runtime environment, and with no additional synchronization or
+  other coordination on the part of the calling code.
 * Thread-safe classes encapsulate any needed synchronization so that clients need not provide their own.
 * Stateless objects are always thread-safe.
+    * Stateless object: Stateless object is an instance of a class without instance fields (instance variables). The
+      class may have fields, but they are compile-time constants (static final).
+    * Immutable object: Immutable objects may have state, but it will not be change in run-time. e.g., instance
+      variables with `final` keyword
+
 #### 2.2 Atomicity
+
 * Atomic: execute as a single, indivisible operation
 * Race Conditions
-    * A race condition occurs when the correctness of a computation depends on the relative timing or interleaving of multiple threads by the runtime
+    * What
+      is [Race Condition](https://github.com/EddieChoCho/tech_notes/blob/master/OperatingSystem/ProcessSynchronization.md#race-condition):
+        * The situation where several threads `access and manipulate shared data concurrently`
+        * The final value of the shared data `depends upon which thread finished last`
+    * A race condition occurs when the correctness of a computation depends on the relative timing or interleaving of
+      multiple threads by the runtime
     * Check-then-act operations (e.g. lazy initialization)
-        * You observe something to be true (file X doesn't exist) and then take action based on that observation (create X)
-        * But in fact the observation could have become invalid between the time you observed it and the time you acted on it (someone else created X in the meantime), causing a problem (unexpected exception, overwritten data, file corruption).
+        * You observe something to be true (file X doesn't exist) and then take action based on that observation (create
+          X)
+        * But in fact the observation could have become invalid between the time you observed it and the time you acted
+          on it (someone else created X in the meantime), causing a problem (unexpected exception, overwritten data,
+          file corruption).
     * Read-modify-write operations (e.g. increment)
-        * Like incrementing a counter, define a transformation of an object's state in terms of its previous state.    
+        * Like incrementing a counter, define a transformation of an object's state in terms of its previous state.
     * Race condition v.s. Data race
         * Data race: synchronization is not used to coordinate all access to a shared non-final field.
-        * Not all race conditions are data races, and not all data races are race conditions, but they both can cause concurrent programs to fail in unpredictable ways.
+        * Not all race conditions are data races, and not all data races are race conditions, but they both can cause
+          concurrent programs to fail in unpredictable ways.
 
 * Compound Actions
     * We refer collectively to check-then-act and read-modify-write sequences as compound actions: sequences of operations that must be executed atomically in order to remain thread-safe.
@@ -47,10 +81,11 @@
     * Performance problem
     
 * Reentrancy
+    * Intrinsic Locks are reentrant.
     * Reentrancy means that locks are acquired on a per-thread rather than per-invocation basis.
     * Reentrancy is implemented by associating with each lock an acquisition count and an owning thread. When the count is zero, the lock is considered unheld.
-        * When a thread acquires a previously unheld lock, the JVM records the owner and sets the acquisition count to one. 
-        * If that same thread acquires the lock again, the count is incremented, and when the owning thread exits the synchronized block, the count is decremented. 
+        * When a thread acquires a previously unheld lock, the JVM records the owner and sets the acquisition count to one.
+        * If that same thread acquires the lock again, the count is incremented, and when the owning thread exits the synchronized block, the count is decremented.
         * When the count reaches zero, the lock is released.
     * Default locking behavior for pthreads (POSIX threads) mutexes, which are granted on a pe-invocation basis.
     * Code that would Deadlock if Intrinsic Locks were Not Reentrant
@@ -82,8 +117,22 @@
 * Avoid holding locks during lengthy computations or operations at risk of not completing quickly such as network or console I/O.
 
 ### Chapter 3. Sharing Objects
-* Synchronization also has another significant, and subtle, aspect: memory visibility. 
-* We want not only to prevent one thread from modifying the state of an object when another is using it, but also to ensure that when a thread modifies the state of an object, other threads can actually see the changes that were made.
+
+* This chapter examines techniques for sharing and publishing objects, so they can be safely accessed by multiple
+  threads.
+* Together, they lay the foundation for building thread-safe classes and safely structuring concurrent applications
+  using the java.util.concurrent library classes.
+
+* Synchronized is not only about atomicity or demarcating "critical sections".
+    * Critical sections:
+        * Accesses to shared data are encapsulated in regions of code guarded by synchronization primitives (e.g. locks)
+          . Such guarded regions of code are called critical sections.
+        * The semantics of a critical section dictate that only one thread can execute it at a given time. Any other
+          thread that requires access to shared data must wait for the current thread to complete the critical section.
+
+* Synchronization also has another significant, and subtle, aspect: memory visibility.
+* We want not only to prevent one thread from modifying the state of an object when another is using it, but also to
+  ensure that when a thread modifies the state of an object, other threads can actually see the changes that were made.
 
 #### 3.1 Visibility
 * There is no guarantee that the reading thread will see a value written by another thread on a timely basis, or even at all. 
@@ -96,7 +145,8 @@
     * A thread may see an out-of-date value. Unless synchronization is used every time a variable is accessed, it is possible to see a stale value for that variable.
     * Worse, staleness is not all-or-nothing: a thread can see an up-to-date value of one variable but a stale value of another variable that was written first.
     * Reading data without synchronization is analogous to using the READ_UNCOMMITTED isolation level in a database, where you are willing to trade accuracy for performance. 
-        * However, in the case of unsynchronized reads, you are trading away a greater degree of accuracy, since the visible value for a shared variable can be arbitrarily stale.    
+        * However, in the case of un-synchronized reads, you are trading away a greater degree of accuracy, since the
+          visible value for a shared variable can be arbitrarily stale.
     * Synchronizing only the setter would not be sufficient: threads calling get would still be able to see stale values.
         
 * Non-atomic 64-bit Operations
@@ -111,9 +161,11 @@
     * Intrinsic locking can be used to guarantee that one thread sees the effects of another in a predictable manner.
     * Locking is not just about mutual exclusion; it is also about memory visibility. To ensure that all threads see the most up-to-date values of shared mutable variables, the reading and writing threads must synchronize on a common lock.
     * Notes from Thinking in Java:
-            * Brian’s Rule of Synchronization:
-                * If you are writing a variable that might next be read by another thread, or reading a variable that might have last been written by another thread, you must use synchronization, and further, both the reader and the writer must synchronize using the same monitor lock.
-            * This is an important point: Every method that accesses a critical shared resource must be synchronized or it won’t work right.
+      * Brian’s Rule of Synchronization:
+      * If you are writing a variable that might next be read by another thread, or reading a variable that might have
+      last been written by another thread, you must use synchronization, and further, both the reader and the writer
+      must synchronize using the same monitor lock. * This is an important point: Every method that accesses a critical
+      shared resource must be synchronized, or it won’t work right.
             
 * Volatile Variables
     * When a field is declared volatile, the compiler and runtime are put on notice that this variable is shared and that operations on it should not be reordered with other memory operations. 
@@ -140,41 +192,66 @@
 
 #### 3.2 Publication and Escape
 * What is `publishing an object`
-    * Making it available to code outside of its current scope
+    * Making it available to code outside its current scope
         * By storing a reference to it where other code can find it.
-        * Returning it from a non-private method. 
+        * Returning it from a non-private method.
         * Or passing it to a method in another class.
-* Publishing internal state variables can compromise encapsulation and make it more difficult to preserve invariants; (?) 
+* Publishing internal state variables can compromise encapsulation and make it more difficult to preserve invariants; (
+  ?)
 * Publishing objects before they are fully constructed can compromise thread safety
 * What is `escape`
     * An object that is published when it should not have been is said to have escaped.
-* Any object that is reachable from a published object by following some chain of non-private field references and method calls has also been published.
-* Once an object escapes, you have to assume that another class or thread may, maliciously or carelessly, misuse it. 
-* This is a compelling reason to use encapsulation: it makes it practical to analyze programs for correctness and harder to violate design constraints accidentally.
-* Do not allow the this reference to escape during construction.
-    
-#### 3.3 Thread Confinement //TBD!
-* When an object is confined to a thread, such usage is automatically thread-safe even if the confined object itself is not.
-* The language and core libraries provide mechanisms that can help in maintaining thread confinement - local variables and the ThreadLocal class.
-* Comment application of thread confinement
-    * The use of pooled JDBC (Java Database Connectivity) Connection objects.
-    * Since most requests, such as servlet requests or EJB calls, are processed synchronously by a single thread, and the pool will not dispense the same connection to another thread until it has been returned, this pattern of connection management implicitly confines the Connection to that thread for the duration of the request.
-        
+* Any object that is reachable from a published object by following some chain of non-private field references and
+  method calls has also been published.
+* Once an object escapes, you have to assume that another class or thread may, maliciously or carelessly, misuse it.
+* This is a compelling reason to use encapsulation: it makes it practical to analyze programs for correctness and harder
+  to violate design constraints accidentally.
+* Do not allow the `this` reference to escape during construction.
+
+#### 3.3 Thread Confinement
+
+* Accessing shared, mutable data requires using synchronization; one way to avoid this requirement is to not share.
+* If data is only accessed from a single thread, no synchronization is needed. This technique, thread confinement, is
+  one of the simplest ways to achieve thread safety.
+* When an object is confined to a thread, such usage is automatically thread-safe even if the confined object itself is
+  not.
+*
+    * Comment application of thread confinement
+        * The use of pooled JDBC (Java Database Connectivity) Connection objects.
+        * Since most requests, such as servlet requests or EJB calls, are processed synchronously by a single thread,
+          and the pool will not dispense the same connection to another thread until it has been returned, this pattern
+          of connection management implicitly confines the Connection to that thread for the duration of the request.
+* The language and core libraries provide mechanisms that can help in maintaining thread confinement - local variables
+  and the ThreadLocal class.
+* But even with these, it is still the programmer's responsibility to ensure that thread-confined objects do not escape
+  from their intended thread.
+
 * Ad-hoc Thread Confinement
-        
+    * Ad-hoc thread confinement describes when the responsibility for maintaining thread confinement falls entirely on
+      the implementation.
+
 * Stack Confinement(within-thread or thread-local usage)
-    * Stack confinement is a special case of thread confinement in which an object can only be reached through local variables.
+    * Stack confinement is a special case of thread confinement in which an object can only be reached through local
+      variables.
     * It is simpler to maintain and less fragile than ad-hoc thread confinement.
-    
+
 * ThreadLocal
+    * A more formal means of maintaining thread confinement is ThreadLocal, which allows you to associate a per-thread
+      value with a value-holding object.
+    * This technique can also be used when a frequently used operation requires a temporary object such as a buffer and
+      wants to avoid reallocating the temporary object on each invocation.
+    * Since now days we use threads from the thread pool, a thread can be used by multiple request, we need to clean up
+      the ThreadLocal value properly.
 
 #### 3.4 Immutability 
 * Immutable objects are always thread-safe.
 * Immutable objects are safe to share and publish freely without the need to make defensive copies.
 * An object is immutable if:
     * Its state cannot be modified after construction;
-    * All its fields are final; (It is technically possible to have an immutable object without all fields being final. String is such a class but this relies on delicate reasoning about benign data races that requires a deep understanding of the Java Memory Model.)
-    * It is properly constructed (the this reference does not escape during construction).
+    * All its fields are final; (It is technically possible to have an immutable object without all fields being final.
+      String is such a class but this relies on delicate reasoning about benign data races that requires a deep
+      understanding of the Java Memory Model.)
+    * It is properly constructed (the `this` reference does not escape during construction).
 
 * Final Fields
     * Final fields can't be modified (although the objects they refer to can be modified if they are mutable).
@@ -204,33 +281,56 @@
         * Mutable objects must be safely published, and must be either thread-safe or guarded by a lock
 
 * Sharing Objects Safely
-        
-    
+
 ### Chapter 4. (Composing Objects)
-#### 4.1. Designing a ThreadǦsafe Class
-* The design process for a threadͲsafe class should include these three basic elements:
+
+* This chapter covers patterns for structuring classes that can make it easier to make them thread-safe and to maintain
+  them without accidentally undermining their safety guarantees.
+
+#### 4.1. Designing a Thread-safe Class
+
+* The design process for a thread-safe class should include these three basic elements:
     * Identify the variables that form the object's state;
     * Identify the invariants that constrain the state variables;
     * Establish a policy for managing concurrent access to the object's state.
 
-* Synchronization policy 
-	* The synchronization policy defines how an object coordinates access to its state without violating its invariants or postͲ conditions. 
-	* It specifies what combination of immutability, thread confinement, and locking is used to maintain thread safety, and which variables are guarded by which locks. 
-	* To ensure that the class can be analyzed and maintained, document the synchronization policy.
+* Synchronization policy
+    * The synchronization policy defines how an object coordinates access to its state without violating its invariants
+      or postͲ conditions.
+    * It specifies what combination of immutability, thread confinement, and locking is used to maintain thread safety,
+      and which variables are guarded by which locks.
+    * To ensure that the class can be analyzed and maintained, document the synchronization policy.
 
 * 4.1.1. Gathering Synchronization Requirements
-    * You cannot ensure thread safety without understanding an object's invariants and post-conditions(https://en.wikipedia.org/wiki/Postcondition).
-    * Constraints on the valid values or state transitions for state variables can create atomicity and encapsulation requirements.
-    
-* TBD...
+    * You cannot ensure thread safety without understanding an object's invariants and
+      post-conditions(https://en.wikipedia.org/wiki/Postcondition).
+    * Constraints on the valid values or state transitions for state variables can create atomicity and encapsulation
+      requirements.
+
+#### 4.2. Instance Confinement
+
+#### 4.3. Delegating Thread Safety
+
+#### 4.4. Adding Functionality to Existing Thread-safe Classes
+
+#### 4.5. Documenting Synchronization Policies
+
 ### Chapter 5 (Building Blocks)
+
 * TBD...
+
 ## Part II - Structuring Concurrent Applications:
+
 ### Chapter 6 (Task Execution)
+
 * TBD...
+
 ### Chapter 7 (Cancellation and Shutdown)
-* TBD... 
+
+* TBD...
+
 ### Chapter 8 (Applying Thread Pools)
+
 * TBD...
 ### Chapter 9 (GUI Applications)
 * TBD... 
