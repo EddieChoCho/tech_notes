@@ -265,11 +265,19 @@
     * Immutable objects(unmodifiable state, all fields are final, and proper construction) can be used safely by any thread without additional synchronization, even when synchronization is not used to publish them.
      
 * Safe Publication Idioms
-    * To publish an object safely, both the reference to the object and the object's state must be made visible to other threads at the same time. A properly constructed object can be safely published by:
+    * To publish an object safely, both the reference to the object and the object's state must be made visible to other
+      threads at the same time. A properly constructed object can be safely published by:
         * Initializing an object reference from a static initializer;
         * Storing a reference to it into a volatile field or AtomicReference;
         * Storing a reference to it into a final field of a properly constructed object; or
         * Storing a reference to it into a field that is properly guarded by a lock.
+    * The thread-safe library collections offer the following safe publication guarantees:
+        * Placing a key or value in a Hashtable, synchronizedMap, or Concurrent-Map safely publishes it to any thread
+          that retrieves it from the Map (whether directly or via an iterator);
+        * Placing an element in a Vector, CopyOnWriteArrayList, CopyOnWrite-ArraySet, synchronizedList, or
+          synchronizedSet safely publishes it to any thread that retrieves it from the collection;
+        * Placing an element on a BlockingQueue or a ConcurrentLinkedQueue safely publishes it to any thread that
+          retrieves it from the queue.
 
 * Effectively Immutable Objects
     * Safely published effectively immutable objects can be used safely by any thread without additional synchronization.
@@ -306,12 +314,53 @@
       post-conditions(https://en.wikipedia.org/wiki/Postcondition).
     * Constraints on the valid values or state transitions for state variables can create atomicity and encapsulation
       requirements.
+* 4.1.2. State-dependent Operations
+    * Class invariants and method post-conditions constrain the valid states and state transitions for an object. Some
+      objects also have methods with state-based preconditions.
+    * Concurrent programs add the possibility of waiting until the precondition becomes true, and then proceeding with
+      the operation.
+    * The built-in mechanisms for efficiently waiting for a condition to become true - wait and notify - are tightly
+      bound to intrinsic locking, and can be difficult to use correctly.
 
 #### 4.2. Instance Confinement
 
+* If an object is not thread-safe, several techniques can still let it be used safely in a multithreaded program.
+    * You can ensure that it is only accessed from a single thread (thread confinement).
+    * Or that all access to it is properly guarded by a lock.
+* Encapsulation simplifies making classes thread-safe by promoting instance confinement, often just called confinement.
+* Combining confinement with an appropriate locking discipline can ensure that otherwise non-thread-safe objects are
+  used in a thread-safe manner.
+* Encapsulating data within an object confines access to the data to the object's methods, making it easier to ensure
+  that the data is always accessed with the appropriate lock held.
+* Monitor pattern
+    * Monitor pattern is used to enforce single-threaded access to data. Only one thread at a time is allowed to execute
+      code within the monitor object.
+* Thread safety also could be maintained by copying mutable data before returning it to the client.
+
 #### 4.3. Delegating Thread Safety
 
+* Delegation
+    * If the components of a class are already thread-safe which makes the class also thread-safe, We could say that the
+      class `delegates` its thread safety responsibilities to the components.
+    * UnmodifiableMap
+        * An unmodifiable view of the specified map.
+        * Query operations on the returned map "read through" to the specified map, and attempts to modify the returned
+          map, whether direct or via its collection views, result in an UnsupportedOperationException.
+* When Delegation Fails
+    * If a class has compound actions, delegation alone is not a suitable approach for thread safety.
+    * In these cases, the class must provide its own locking to ensure that compound actions are atomic, unless the
+      entire compound action can also be delegated to the underlying state variables.
+
 #### 4.4. Adding Functionality to Existing Thread-safe Classes
+
+* Modify the original class to support the desired operation.
+    * You need to understand the implementation's synchronization policy so that you can enhance it in a manner
+      consistent with its original design.
+    * Adding the new method directly to the class means that all the code that implements the synchronization policy for
+      that class is still contained in one source file, facilitating easier comprehension and maintenance.
+
+* Extend the class
+    * TDB...
 
 #### 4.5. Documenting Synchronization Policies
 
