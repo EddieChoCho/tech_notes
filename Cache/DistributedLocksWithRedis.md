@@ -28,10 +28,27 @@
 
 ## Correct Implementation with a Single Instance
 
-* Set to a value “my_random_value”, which must be unique across all clients and all lock requests, to the key.
-* Random value is used in order to release the lock in a safe way.
-  * The key will be removed only if it exists and the value stored at the key is exactly the one I expect to be.
-  * This can avoid removing a lock that was created by another client.
+* To acquire the lock, the way to go is the following:
+    ```
+    set {$resource_name} {my_random_value} nx px {$timeout}
+    ```
+    * NX option: The command will set the key only if it does not already exist
+    * PX option: Expire time (milliseconds)
+    * Set to a value “my_random_value”, which must be unique across all clients and all lock requests, to the key.
+    * Random value is used in order to release the lock in a safe way.
+        * The key will be removed only if it exists and the value stored at the key is exactly the one I expect to be.
+        * This can avoid removing a lock that was created by another client.
+
+* To release the lock in a safe way(remove the key only if it exists and the value stored at the key is exactly the one
+  I expect to be.):
+  ```
+  if redis.call("get",KEYS[1]) == ARGV[1] then
+    return redis.call("del",KEYS[1])
+  else
+    return 0
+  end
+  ```
+    * The Lua script can ensure the `atomic` of the release-lock operation.
 
 * With this system, reasoning about a non-distributed system composed of a single, always available, instance, is safe.
 
