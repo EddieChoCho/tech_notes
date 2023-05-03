@@ -67,6 +67,7 @@
     could be in the ~ 5-50 milliseconds range.
   * This prevents the client from remaining blocked for a long time trying to talk with a Redis node which is down: if
     an instance is not available, we should try to talk with the next instance ASAP.
+
 3. The client computes how much time elapsed in order to acquire the lock, by subtracting from the current time the
    timestamp obtained in step 1. If and only if the client was able to acquire the lock in the majority of the
    instances (at least 3), and the total time elapsed to acquire the lock is less than lock validity time, the lock is
@@ -76,6 +77,43 @@
 5. If the client failed to acquire the lock for some reason (either it was not able to lock N/2+1 instances or the
    validity time is negative), it will try to unlock all the instances (even the instances it believed it was not able
    to lock).
+
+## Redisson
+
+### Lock
+
+* Lock watchdog
+    * If Redisson instance which acquired lock crashes then such lock could hang forever in acquired state. To avoid
+      this Redisson maintains lock watchdog.
+    * It prolongs lock expiration while lock holder Redisson instance is alive.
+    * By default, lock watchdog timeout is 30 seconds(can be changed through Config.lockWatchdogTimeout setting).
+
+* `leaseTime`
+    * A parameter during lock acquisition can be defined. After specified time interval locked lock will be released
+      automatically.
+
+* Code example:
+
+```
+RLock lock = redisson.getLock("myLock");
+
+// traditional lock method
+lock.lock();
+
+// or acquire lock and automatically unlock it after 10 seconds
+lock.lock(10, TimeUnit.SECONDS);
+
+// or wait for lock aquisition up to 100 seconds 
+// and automatically unlock it after 10 seconds
+boolean res = lock.tryLock(100, 10, TimeUnit.SECONDS);
+if (res) {
+   try {
+     ...
+   } finally {
+       lock.unlock();
+   }
+}
+```
 
 ## References
 
