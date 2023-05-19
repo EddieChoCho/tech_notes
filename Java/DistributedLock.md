@@ -82,6 +82,42 @@
         * @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true)
         * "SELECT COUNT(REGION) FROM %sLOCK WHERE REGION=? AND LOCK_KEY=? AND CLIENT_ID=? AND CREATED_DATE>=?"; == 1
 
+### RedisLockRegistry.RedisLock(RedisSpinLock)
+
+#### Methods
+
+* public final boolean tryLock(long time, TimeUnit unit)
+    * `this.localLock.tryLock(time, unit)`
+    * protected final Boolean obtainLock():
+
+      KEYS:    `Collections.singletonList(this.lockKey)`, ARGV[1]:    `RedisLockRegistry.this.clientId`,
+      ARGV[2]:    `String.valueOf(RedisLockRegistry.this.expireAfter)`
+
+      ```
+      local lockClientId = redis.call('GET', KEYS[1])
+          if lockClientId == ARGV[1] then
+              redis.call('PEXPIRE', KEYS[1], ARGV[2])
+              return true
+          elseif not lockClientId then
+              redis.call('SET', KEYS[1], ARGV[1], 'PX', ARGV[2])
+              return true
+          end 
+              return false
+      ```
+
+      PEXPIRE: Set a timeout on key. After the timeout has expired, the key will automatically be deleted.
+
+* public final void unlock()
+    * if `this.localLock.isHeldByCurrentThread()`
+    * if `this.localLock.getHoldCount() > 1`
+        * `this.localLock.unlock(); return;`
+    * else
+        *
+        if `RedisLockRegistry.this.clientId.equals(RedisLockRegistry.this.redisTemplate.boundValueOps(this.lockKey).get())`
+        //checking if value is equals to clientId
+            * `RedisLockRegistry.this.redisTemplate.unlink(this.lockKey)`;
+            * `RedisLockRegistry.this.redisTemplate.delete(this.lockKey)`;
+
 ## References
 
 * [Spring Tips: Distributed Locks with Spring Integration](https://youtu.be/firwCHbC7-c)
