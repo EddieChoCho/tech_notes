@@ -89,11 +89,11 @@
 * public final boolean tryLock(long time, TimeUnit unit)
     * `this.localLock.tryLock(time, unit)`
     * protected final Boolean obtainLock():
-
-      KEYS:    `Collections.singletonList(this.lockKey)`, ARGV[1]:    `RedisLockRegistry.this.clientId`,
-      ARGV[2]:    `String.valueOf(RedisLockRegistry.this.expireAfter)`
-
       ```
+      -- KEYS:    `Collections.singletonList(this.lockKey)`, 
+      -- ARGV[1]:    `RedisLockRegistry.this.clientId`,
+      -- ARGV[2]:    `String.valueOf(RedisLockRegistry.this.expireAfter)`
+
       local lockClientId = redis.call('GET', KEYS[1])
           if lockClientId == ARGV[1] then
               redis.call('PEXPIRE', KEYS[1], ARGV[2])
@@ -103,9 +103,9 @@
               return true
           end 
               return false
+      
+      -- PEXPIRE: Set a timeout on key. After the timeout has expired, the key will automatically be deleted.
       ```
-
-      PEXPIRE: Set a timeout on key. After the timeout has expired, the key will automatically be deleted.
 
 * public final void unlock()
     * if `this.localLock.isHeldByCurrentThread()`
@@ -117,6 +117,12 @@
         //checking if value is equals to clientId
             * `RedisLockRegistry.this.redisTemplate.unlink(this.lockKey)`;
             * `RedisLockRegistry.this.redisTemplate.delete(this.lockKey)`;
+
+## Distributed Lock v.s. Table Lock
+
+* Eddie:
+    * If there are multiple operations which will modify multiple tables, distributed lock could be better?
+    * Distributed Lock works only when all the operation checking the same lock.
 
 ## References
 
