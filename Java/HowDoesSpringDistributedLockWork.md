@@ -23,7 +23,7 @@ In this section, we will explore the source code
 of [RedisLockRegistry.java(version 6.1.x)]( https://github.com/spring-projects/spring-integration/blob/6.1.x/spring-integration-redis/src/main/java/org/springframework/integration/redis/util/RedisLockRegistry.java
 ) in detail, dissecting its components to comprehend the underlying mechanism of this distributed lock.
 
-### The Contraction of RedisLockRegistry bean
+### The Construction of RedisLockRegistry bean
 
 ```java
 public final class RedisLockRegistry {
