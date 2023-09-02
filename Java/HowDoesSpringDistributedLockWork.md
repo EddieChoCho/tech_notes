@@ -1,4 +1,4 @@
-# How does Spring Distributed Lock work? Exploring source code of RedisLockRegistry and RedisSpinLock
+# How Does Spring Distributed Lock Work? Exploring Source Code of RedisLockRegistry and RedisSpinLock
 
 In this article, we embark on a journey to unravel the intricate mechanisms of Spring Distributed Lock using Redis.
 
@@ -19,11 +19,10 @@ concurrent access by insert, update, or delete data, the status of the lock, in 
 RedisPubSubLock are the classes that inherit from the RedisLock abstract class. Our focus in this article will be on the
 former, RedisSpinLock.
 
-In this section, we will explore the source code
-of [RedisLockRegistry.java(version 6.1.x)]( https://github.com/spring-projects/spring-integration/blob/6.1.x/spring-integration-redis/src/main/java/org/springframework/integration/redis/util/RedisLockRegistry.java
+We will explore the source code of [RedisLockRegistry.java(version 6.1.x)]( https://github.com/spring-projects/spring-integration/blob/6.1.x/spring-integration-redis/src/main/java/org/springframework/integration/redis/util/RedisLockRegistry.java
 ) in detail, dissecting its components to comprehend the underlying mechanism of this distributed lock.
 
-### The Construction of RedisLockRegistry bean
+## The Construction of RedisLockRegistry Bean
 
 ```java
 public final class RedisLockRegistry {
@@ -37,7 +36,6 @@ public final class RedisLockRegistry {
     private final StringRedisTemplate redisTemplate;
 
     private final long expireAfter;
-
     //...
     public RedisLockRegistry(RedisConnectionFactory connectionFactory, String registryKey) {
         this(connectionFactory, registryKey, DEFAULT_EXPIRE_AFTER);
@@ -58,8 +56,8 @@ public final class RedisLockRegistry {
 When creating a RedisLockRegistry instance, you need to provide three parameters: `connectionFactory`, `registryKey`,
 and `expireAfter`.
 
-The `connectionFactory` parameter is used to generate the redisTemplate instance field within the RedisLockRegistry.
-This redisTemplate facilitates interaction with Redis using string values.
+The `connectionFactory` parameter is used to generate the `redisTemplate` instance field within the RedisLockRegistry.
+This `redisTemplate` facilitates interaction with Redis using string values.
 
 The `registryKey` parameter serves as a prefix for key names. These key names are formed by combining the `registryKey`
 and the key's specific value, separated by a colon. For example, if `registryKey` is set to "Spring" and you intend to
@@ -73,7 +71,7 @@ RedisLockRegistry object. It represents the process's identity and is used as th
 will be used to veirfy the ownership of the distributed lock. As a result, each process should maintain only one
 instance of RedisLockRegistry.
 
-### Obtaining Locks from RedisLockRegistry
+## Obtaining Locks from RedisLockRegistry
 
 ```java
 public final class RedisLockRegistry {
@@ -92,6 +90,8 @@ public final class RedisLockRegistry {
             return size() > RedisLockRegistry.this.cacheCapacity;
         }
     };
+
+    private final String registryKey;
 
     //...
     @Override
@@ -124,6 +124,22 @@ public final class RedisLockRegistry {
             this.lock.unlock();
         }
     }
+
+    //...
+    private abstract class RedisLock implements Lock {
+        //...
+        protected final String lockKey;
+
+        //...
+        private RedisLock(String path) {
+            this.lockKey = constructLockKey(path);
+        }
+
+        private String constructLockKey(String path) {
+            return RedisLockRegistry.this.registryKey + ':' + path;
+        }
+        //...
+    }
     //...
 }
 ```
@@ -135,14 +151,15 @@ passing in a string key.
 In the source code of the `obtain` method, the ReentrantLock instance field of RedisLockRegistry - `lock` is pivotal in
 ensuring the orderly acquisition of a RedisLock. Its purpose is to restrict only one thread at a time from attempting to
 acquire a RedisLock. Should no RedisLock object be associated with the provided key in the `locks` map, a new RedisLock
-is created with the key and returned. The value of the value will be assign to the String instance variable `lockKey` of
-RedisLock. By default, this newly created RedisLock is an instance of RedisSpinLock. On the other hand, if a RedisLock
-object already exists for the key, that existing instance will be returned.
+is created with the key and returned. The value of the key will be composed with the `registryKey` and assigned to the
+String instance variable `lockKey` of RedisLock. By default, this newly created RedisLock is an instance of
+RedisSpinLock. On the other hand, if a RedisLock object already exists for the key, that existing instance will be
+returned.
 
 Furthermore, the `lock` instance field also manages concurrent access to the `locks` map in the `expireUnusedOlderThan`
 method. Consequently, there is no need to be concerned about potential race conditions between these two methods.
 
-### Acquiring Distributed Lock through Invoking tryLock method of RedisLock
+## Acquiring a Distributed Lock Through Invoking `tryLock` Method of RedisLock
 
 ```java
 public final class RedisLockRegistry {
@@ -189,7 +206,7 @@ waiting time. If the lock is successfully acquired, the `localLock` is unlocked 
 acquisition fails or any exceptions occur during the process, the `localLock` is still unlocked to prevent potential
 deadlocks, and false is returned to signal the unsuccessful acquisition to the caller.
 
-The `tryRedisLock` method internally invokes the tryRedisLockInner method, an abstract method with distinct
+The `tryRedisLock` method internally invokes the `tryRedisLockInner` method, an abstract method with distinct
 implementations in RedisSpinLock and RedisPubSubLock. For an in-depth exploration of this process, we'll now delve into
 the implementation within RedisSpinLock to understand the specific actions undertaken.
 
@@ -220,10 +237,12 @@ public final class RedisLockRegistry {
 ```
 
 The `tryRedisLockInner` method diligently attempts to invoke the `obtainLock` method every 100 milliseconds, which
-handles the communication task with Redis. When `time` is set to -1, indicating that the waiting time hasn't been
-specified, the `tryRedisLockInner` method perseveres until the `obtainLock` method returns true. Alternatively, when a
-waiting time is specified, the method continuously checks if the waiting time has been exceeded. In either case, the
-method returns the acquisition result, whether successful or unsuccessful.
+handles the communication task with Redis.
+
+When `time` is set to -1, indicating that the waiting time hasn't been specified, the `tryRedisLockInner` method
+perseveres until the `obtainLock` method returns true. Alternatively, when a waiting time is specified, the method
+continuously checks if the waiting time has been exceeded. In either case, the method returns the acquisition result,
+whether successful or unsuccessful.
 
 In the pursuit of reliability, the `tryRedisLockInner` method showcases a robust structure that supports both indefinite
 and time-bound lock acquisition scenarios.
@@ -285,7 +304,7 @@ scripts and functions, eliminating concerns about concurrency issues.
 The method showcases a well-structured script execution process within Redis, ensuring the proper acquisition and
 management of distributed locks.
 
-### Releasing a Distributed Lock by Invoking the unlock Method of RedisLock
+## Releasing a Distributed Lock by Invoking the `unlock` Method of RedisLock
 
 ```java
 public final class RedisLockRegistry {
@@ -338,14 +357,14 @@ Given that the `localLock`  is an instance of ReentrantLock, it's feasible for a
 multiple locking actions that aren't necessarily matched by an equal number of unlocking actions. To account for this,
 the hold count of the thread is examined:
 
-If the hold count surpasses one, signifying that additional unlock actions must be executed before releasing the
-distributed lock, the `unlock` method of `localLock` is invoked, and the method's execution concludes.
+* If the hold count surpasses one, signifying that additional unlock actions must be executed before releasing the
+  distributed lock, the `unlock` method of `localLock` is invoked, and the method's execution concludes.
 
-Conversely, if the hold count equals one, denoting that the distributed lock can be released, the `removeLockKey` method
-is called within a try block. This method is responsible for erasing the lock's status—previously inserted into Redis by
-the `obtainLock` method of RedisLock. The final invocation of `localLock.unlock` within the current lifecycle of
-distributed lock utilization takes place within the finally block. This ensures that regardless of exceptions or flow
-control, the lock is reliably released.
+* Conversely, if the hold count equals one, denoting that the distributed lock can be released, the `removeLockKey`
+  method is called within a try block. This method is responsible for erasing the lock's status—previously inserted into
+  Redis by the `obtainLock` method of RedisLock. The final invocation of `localLock.unlock` within the current lifecycle
+  of distributed lock utilization takes place within the finally block. This ensures that regardless of exceptions or
+  flow control, the lock is reliably released.
 
 ```java
 public final class RedisLockRegistry {
@@ -453,7 +472,7 @@ The `removeLockKeyInnerDelete` method features a nearly identical implementation
 distinction lies in the script executed by `removeLockKeyInnerDelete`, which employs the `DEL` command as opposed to
 the `UNLINK` command.
 
-### Summary
+## Summary
 
 Central to this solution desgin of RedisLockRegistry is the utilization of the lock construct, specifically the
 ReentrantLock. This essential component ensures the thread-safe characteristic of the distributed lock within a single
