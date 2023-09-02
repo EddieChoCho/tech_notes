@@ -10,22 +10,42 @@
     * Shared by all threads
 
 * Thread
-    * A thread is a unit of execution within a process. Each process can have multiple threads. Every thread created by a process shares the process's memory and files.
+    * A thread is a unit of execution within a process. Each process can have multiple threads. Every thread created by
+      a process shares the process's memory and files.
 
 * Thread stack
     * Thread stack is the memory that only that thread can access
     * Local variables
     * [The call stack](https://youtu.be/5xUDoKkmuyw)
 
+### Methods of Thread
+
+* Join
+    * thead.join(): Join a thread - wait for the Java Thread to terminate
+* Interrupt
+    * thread.interrupt(): Interrupts are cooperative mechanisms for indicating stop signal to a thread.
+    * thead.isInterrupted(): check the interrupt flag
+    * thead.interrupted(): check the interrupt flag and reset interrupt
+    * InterruptedException: let main thread know it has accepted that interrupted flag, and it has stopped performing
+      any operation.
+
 ### Blocking
-* If one task in your program is unable to continue because of some condition outside of the control of the program (typically I/O), we say that the task or the thread blocks. 
-* Without concurrency, the whole program comes to a stop until the external condition changes. If the program is written using concurrency, however, the other tasks in the program can continue to execute when one task is blocked, so the program continues to move forward.
+
+* If one task in your program is unable to continue because of some condition outside of the control of the program (
+  typically I/O), we say that the task or the thread blocks.
+* Without concurrency, the whole program comes to a stop until the external condition changes. If the program is written
+  using concurrency, however, the other tasks in the program can continue to execute when one task is blocked, so the
+  program continues to move forward.
 
 #### multiprocessor machine
+
 * multiple tasks can be distributed across those processors, which can dramatically improve throughput.
 
 #### single processor:
-* concurrent program running on a single processor should actually have more overhead than if all the parts of the program ran sequentially, because of the added cost of the so-called `context switch` (changing from one task to another).
+
+* concurrent program running on a single processor should actually have more overhead than if all the parts of the
+  program ran sequentially, because of the added cost of the so-called `context switch` (changing from one task to
+  another).
 * From a performance standpoint, it makes no sense to use concurrency on a single-processor machine unless one of the tasks might block.
 * Example of performance improvements in single-processor systems: event-driven programming.
 
