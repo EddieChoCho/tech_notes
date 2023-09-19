@@ -49,6 +49,8 @@
   end
   ```
     * The Lua script can ensure the `atomic` of the release-lock operation.
+    * How could it be atomic? https://redis.io/docs/manual/programmability/eval-intro/
+    * Eval? https://redis.io/docs/manual/programmability/functions-intro/
 
 * With this system, reasoning about a non-distributed system composed of a single, always available, instance, is safe.
 
