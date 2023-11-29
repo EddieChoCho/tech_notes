@@ -51,6 +51,71 @@
   platform thread will not affect your performances.
 * As usual when it comes to performances: measure, don't guess.
 
+### Questions
+
+* Q1. Why all Virtual Threads are daemon thread?
+
+## ScopedValue(Preview Features)
+
+* Scoped Values was introduced from JDK 20 as an incubating API. In JDK 21 this feature is no longer incubating;
+  instead, it is a preview API.
+
+### ThreadLocal variables drawbacks: leaking and memory footprint
+
+* ThreadLocal has some drawbacks: potential memory leaks, and potential memory footprint overhead
+  * The first one lies in the way this API has been designed.
+    * Because ThreadLocal variable are in essence global mutable variables, it may be hard to check who is mutating
+      them.
+    * It may lead to code that is hard to follow, hard to understand and hard to debug.
+
+  * The second one lies in the fact that a platform thread is an expensive resource in an application.
+    * These threads are pooled in executors, and most of the time, they are kept alive for as long as your application
+      is alive.
+    * Your executor services are created when your server application is created, and are never shutdown.
+    * Because a thread never dies, your ThreadLocal variables may be kept alive forever.
+    * You can call remove() to remove a ThreadLocal variable from this internal hash map, but it turns out that many
+      people forget to do that.
+    * And that can create memory leaks in your application, which is annoying.
+
+  * So: ThreadLocal variables are global mutable variables, that can create memory leaks.
+
+* If you spawn new threads from one thread that has a lot of thread local variables, you may end up duplicating all of
+  them, this bug will represent a significant memory footprint overhead in your application.
+  * Everytime you create a new thread, this new thread checks for the current thread, the thread you are in, and by
+    default, copies all the thread local variables from this current thread to the new one.
+  * This is the default behavior, the one you get when you call new Thread() without any argument.
+  * So if you spawn new threads from one thread that has a lot of thread local variables, you may end up duplicating all
+    of them. Which may not be useful in your application. It may be a bug.
+  * And this bug will represent a significant memory footprint overhead in your application.
+
+### How Virtual Threads are changing the need for ThreadLocal
+
+* ThreadLocal variables are fully supported by virtual threads.
+* The most important thing with virtual threads is that they are cheap, so you do not need to pool them anymore.
+* And when you are done with this request, instead of returning that thread to a pool for later use, you can just let it
+  die.
+
+* That solves one problem we had with ThreadLocal, which is this memory leaking that may occur if you forget to call
+  remove() once you are done with a given variable.
+  * Because this ThreadLocal variable will be removed when the thread dies, this problem does not exist anymore.
+
+* But it brings another one: if you have a million virtual threads, and all of them have a copy of a bunch of
+  ThreadLocal variables, then you may discover a memory footprint problem.
+* If ThreadLocal variables were immutable, you could share the reference to them.
+
+### Introducing the new requirements for ScopedValue
+
+* First: you need a way to share some information between some components of your application, without resorting to
+  method arguments, because the code you have maybe untrusted, and the information you want to share may be sensitive.
+* Second: you need this way to be efficient memory-wise, and for that, sharing immutable information may be a good
+  solution.
+* Third: you want a bounded lifetime for this information, to avoid leaking: memory leaking, and information leaking.
+
+### Creating and using a ScopedValue
+
+...TBD
+
 ## References
 
 * [Java 21 new feature: Virtual Threads #RoadTo21](https://youtu.be/5E0LU85EnTI?si=OjN6IlCphUpBR5rt)
+* [Java 20 - From ThreadLocal to ScopedValue with Loom Full Tutorial - JEP Café #16](https://youtu.be/fjvGzBFmyhM?si=zSVzZhCyreysyypF)
