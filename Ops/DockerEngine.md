@@ -198,6 +198,73 @@ volumes:
 #     external: true
 ```
 
+* Start a service with volumes
+
+```
+# The docker service create command doesn't support the -v or --volume flag. 
+# When mounting a volume into a service's containers, you must use the --mount flag.
+
+$ docker service create -d \
+  --replicas=4 \
+  --name devtest-service \
+  --mount source=myvol2,target=/app \
+  nginx:latest
+
+$ docker service ps devtest-service
+ID                  NAME                IMAGE               NODE                DESIRED STATE       CURRENT STATE            ERROR               PORTS
+4d7oz1j85wwn        devtest-service.1   nginx:latest        moby                Running
+
+$ docker service rm devtest-service
+# Removing the service doesn't remove any volumes created by the service. Volume removal is a separate step.  
+```
+
+* Populate a volume using a container
+  * If you start a container which creates a new volume, and the container has files or directories in the directory to
+    be mounted such as /app/, Docker copies the directory's contents into the volume. The container then mounts and uses
+    the volume, and other containers which use the volume also have access to the pre-populated content.
+
+#### 1-2-5. Share data between machines
+
+* ...TBD
+
+#### 1-2-6. Back up, restore, or migrate data volumes
+
+* Back up a volume
+
+```
+$ docker run -v /dbdata --name dbstore ubuntu /bin/bash
+
+# Launch a new container and mount the volume from the dbstore container
+# Mount a local host directory as /backup
+# Pass a command that tars the contents of the dbdata volume to a backup.tar file inside our /backup directory.
+$ docker run --rm --volumes-from dbstore -v $(pwd):/backup ubuntu tar cvf /backup/backup.tar /dbdata
+
+# When the command completes and the container stops, it creates a backup of the dbdata volume.
+```
+
+* Restore volume from a backup
+
+```
+$ docker run -v /dbdata --name dbstore2 ubuntu /bin/bash
+$ docker run --rm --volumes-from dbstore2 -v $(pwd):/backup ubuntu bash -c "cd /dbdata && tar xvf /backup/backup.tar --strip 1"
+```
+
+* Remove volumes
+  * A Docker data volume persists after you delete a container. There are two types of volumes to consider:
+  * Named volumes have a specific source from outside the container, for example, awesome:/bar.
+  * Anonymous volumes have no specific source. Therefore, when the container is deleted, you can instruct the Docker
+    Engine daemon to remove them.
+
+```
+# Remove anonymous volumes:
+## To automatically remove anonymous volumes, use the --rm option. 
+$ docker run --rm -v /foo -v awesome:/bar busybox top
+## This command creates an anonymous /foo volume. 
+## When you remove the container, the Docker Engine removes the /foo volume but not the awesome volume.
+
+# Remove all unused volumes:
+$ docker volume prune
+```
 
 
 
