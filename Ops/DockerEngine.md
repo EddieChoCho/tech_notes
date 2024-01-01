@@ -559,5 +559,101 @@ CMD python /app/app.py
     directory trees can make the impact more noticeable.
   * This is mitigated by the fact that each copy_up operation only occurs the first time a given file is modified.
 
+## 2. Networking
+
+### [2-1. Networking overview](https://docs.docker.com/network/)
+
+* A container has no information about what kind of network it's attached to, or whether their peers are also Docker
+  workloads or not.
+* A container only sees a network interface with an IP address, a gateway, a routing table, DNS services, and other
+  networking details. That is, unless the container uses the `none` network driver.
+
+#### 2-1-1. User-defined networks
+
+* You can create custom, user-defined networks, and connect multiple containers to the same network.
+* Once connected to a user-defined network, containers can communicate with each other using container IP addresses or
+  container names.
+* e.g.,
+
+```
+$ docker network create -d bridge my-net
+# Creates a network using the bridge network driver
+
+$ docker run --network=my-net -itd --name=container3 busybox
+# running a container in the created network
+```
+
+* There are multiple network drivers. e.g., bridge, host, none, overlay, ipvlan, maclan ...etc.
+
+#### 2-1-2. Container networks
+
+* You can attach a container to another container's networking stack directly, using the `--network container:<name|id>`
+  flag format.
+* e.g.,
+
+```
+$ docker run -d --name redis example/redis --bind 127.0.0.1
+# Runs a Redis container, with Redis binding to localhost
+
+$ docker run --rm -it --network container:redis example/redis-cli -h 127.0.0.1
+# Runs the redis-cli command and connecting to the Redis server over the localhost interface.
+```
+
+#### 2-1-3. Published ports
+
+* Use the `--publish` or `-p` flag to make a port available to services outside of Docker. This creates a firewall rule
+  in the host, mapping a container port to a port on the Docker host to the outside world.
+* e.g., `-p 8080:80`: Map port 8080 on the Docker host to TCP port 80 in the container.
+
+* If you want to make a container accessible to other containers, it isn't necessary to publish the container's ports.
+  * You can enable inter-container communication by connecting the containers to the same network, usually a `bridge`
+    network.
+
+* Important
+  * Publishing container ports is insecure by default. Meaning, when you publish a container's ports it becomes
+    available not only to the Docker host, but to the outside world as well.
+  * If you include the localhost IP address (127.0.0.1) with the publish flag, only the Docker host can access the
+    published container port. e.g., `-p 127.0.0.1:8080:80`
+  * Warning
+    * Hosts within the same L2 segment (for example, hosts connected to the same network switch) can reach ports
+      published to localhost.
+
+* IP address and hostname
+  * When a container starts, it can only attach to a single network, using the `--network` flag.
+  * You can connect a running container to additional networks using the `docker network connect` command.
+  * A container's hostname defaults to be the container's ID in Docker. You can override the hostname
+    using `--hostname`.
+  * When connecting to an existing network using docker network connect, you can use the `--alias` flag to specify an
+    additional network alias for the container on that network.
+
+* DNS services
+  * Containers use the same DNS servers as the host by default, but you can override this with `--dns`.
+  * By default, containers inherit the DNS settings as defined in the /etc/resolv.conf configuration file. Containers
+    that attach to the default bridge network receive a copy of this file.
+  * Containers that attach to a custom network use Docker's embedded DNS server. The embedded DNS server forwards
+    external DNS lookups to the DNS servers configured on the host.
+  * Using these flags, you can configure DNS resolution on a per-container
+    basis: `--dns`, `--dns-search`, `--dns-opt`, `--hostname`
+
+* Nameservers with IPv6 addresses
+  * If the /etc/resolv.conf file on the host system contains one or more nameserver entries with an IPv6 address, those
+    nameserver entries get copied over to /etc/resolv.conf in containers that you run.
+  * For containers using musl libc (in other words, Alpine Linux), this results in a race condition for hostname lookup.
+    * As a result, hostname resolution might sporadically fail if the external IPv6 DNS server wins the race condition
+      against the embedded DNS server.
+  * It's rare that the external DNS server is faster than the embedded one.
+    * But things like garbage collection, or large numbers of concurrent DNS requests, can sometimes result in a round
+      trip to the external server being faster than local resolution.
+
+* Custom hosts
+  * Your container will have lines in /etc/hosts which define the hostname of the container itself, as well as localhost
+    and a few other common things.
+  * Custom hosts, defined in /etc/hosts on the host machine, aren't inherited by containers.
+
+### [2-2. Network drivers](https://docs.docker.com/network/drivers/)
+
+* ...TBD
+
+
 
 
