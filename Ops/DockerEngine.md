@@ -652,7 +652,69 @@ $ docker run --rm -it --network container:redis example/redis-cli -h 127.0.0.1
 
 ### [2-2. Network drivers](https://docs.docker.com/network/drivers/)
 
+* Docker's networking subsystem is pluggable, using drivers. Several drivers exist by default, and provide core
+  networking functionality:
+  * bridge:
+    * The default network driver. If you don't specify a driver, this is the type of network you are creating.
+    * The default bridge network is good for running containers that don't require special networking capabilities.
+    * User-defined bridge networks enable containers on the same Docker host to communicate with each other.
+      * A user-defined network typically defines an isolated network for multiple containers belonging to a common
+        project or component.
+
+  * host:
+    * Remove network isolation between the container and the Docker host, and use the host's networking directly.
+    * In other words, when you use this driver, the container's network isn't isolated from the host.
+
+  * overlay:
+    * Overlay networks connect multiple Docker daemons together and enable Swarm services and containers to communicate
+      across nodes. This strategy removes the need to do OS-level routing.
+    * Best when you need containers running on different Docker hosts to communicate, or when multiple applications work
+      together using Swarm services.
+
+  * macvlan:
+    * Macvlan networks allow you to assign a MAC address to a container, making it appear as a physical device on your
+      network.
+    * The Docker daemon routes traffic to containers by their MAC addresses.
+    * Using the macvlan driver is sometimes the best choice when dealing with legacy applications that expect to be
+      directly connected to the physical network, rather than routed through the Docker host's network stack.
+      * e.g., when you are migrating from a VM setup or need your containers to look like physical hosts on your
+        network, each with a unique MAC address.
+
+  * ipvlan:
+    * IPvlan networks give users total control over both IPv4 and IPv6 addressing.
+    * The VLAN driver builds on top of that in giving operators complete control of layer 2 VLAN tagging and even IPvlan
+      L3 routing for users interested in underlay network integration.
+    * IPvlan is similar to Macvlan, but doesn't assign unique MAC addresses to containers.
+      * Consider using IPvlan when there's a restriction on the number of MAC addresses that can be assigned to a
+        network interface or port.
+
+  * none:
+    * Completely isolate a container from the host and other containers. none is not available for Swarm services.
+
+  * Network plugins:
+    * You can install and use third-party network plugins with Docker, witch allow you to integrate Docker with
+      specialized network stacks.
+
+### [2-3. Configure Docker to use a proxy server](https://docs.docker.com/network/proxy/)
+
 * ...TBD
+
+### [2-4. Packet filtering and firewalls](https://docs.docker.com/network/packet-filtering-firewalls/)
+
+* ...TBD
+
+### [2-5. Enable IPv6 support](https://docs.docker.com/config/daemon/ipv6/)
+
+* ...TBD
+
+### 2-6. Networking tutorials
+
+#### [2-6-1. Networking with standalone containers](https://docs.docker.com/network/network-tutorial-standalone/)
+
+
+
+
+
 
 
 
