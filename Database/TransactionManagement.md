@@ -202,6 +202,11 @@
     * Prevent phantoms caused by both insert and update
     * Works only if indices for the inserting/updating fields are created
 
+* Multiversion concurrency control strategy
+    * Transaction operate on an snapshot of the database
+    * PostgreSQL's Repeatable Read implementation does not allow phantom
+      reads(https://www.postgresql.org/docs/current/transaction-iso.html)
+
 ### Isolation levels
 
 * Transaction Characteristics
