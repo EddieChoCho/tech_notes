@@ -45,7 +45,44 @@
 
 TBD...
 
+## Redis Pub/Sub
 
+* SUBSCRIBE, UNSUBSCRIBE and PUBLISH implement the Publish/Subscribe messaging paradigm
+    * Senders (publishers) are not programmed to send their messages to specific receivers (subscribers). Rather,
+      published messages are characterized into channels, without knowledge of what (if any) subscribers there may be.
+    * Subscribers express interest in one or more channels and only receive messages that are of interest, without
+      knowledge of what (if any) publishers there are.
+    * This decoupling of publishers and subscribers allows for greater scalability and a more dynamic network topology.
+
+* e.g.,
+    ```
+        //A client subscribes to channels "channel11" and "ch:00" 
+        SUBSCRIBE channel11 ch:00
+    ```
+    * Messages sent by other clients to these channels will be pushed by Redis to all the subscribed clients.
+    * Subscribers receive the messages in the order that the messages are published.
+* TBD...
+
+### Delivery semantics
+
+* At-most-once message delivery semantics
+* Once the message is sent by the Redis server, there's no chance of it being sent again.
+* If the subscriber is unable to handle the message (for example, due to an error or a network disconnect) the message
+  is forever lost.
+* If your application requires stronger delivery guarantees, you may want to learn about `Redis Streams`.
+    * Messages in streams are persisted, and support both `at-most-once` as well as `at-least-once` delivery semantics.
+
+### Format of pushed messages
+
+* TBD...
+
+### Database & Scoping
+
+* Pub/Sub has no relation to the key space. It was made to not interfere with it on any level, including database
+  numbers.
+    * Publishing on db 10, will be heard by a subscriber on db 1.
+    * If you need scoping of some kind, prefix the channels with the name of the environment (test, staging,
+      production...).
 
 
 
